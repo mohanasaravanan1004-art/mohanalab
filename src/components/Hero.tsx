@@ -109,7 +109,7 @@ export default function Hero({ setActivePage }: HeroProps) {
               id="hero_primary_btn"
               className="group px-10 py-5 bg-white text-[#1E1B4B] font-bold rounded-2xl flex items-center gap-3 hover:scale-[1.02] transition-transform text-xs cursor-pointer"
             >
-              <span>Explore Interactive Demos</span>
+              <span>Explore 30-Day Roadmap</span>
               <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform stroke-current text-[#7C3AED]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
               </svg>

@@ -71,7 +71,7 @@ export default function Footer({ setActivePage }: FooterProps) {
                 onClick={() => setActivePage(page as PageId)}
                 className="hover:text-amber-400 transition-colors cursor-pointer capitalize flex items-center space-x-1"
               >
-                <span>{page === 'projects' ? 'Demos & Projects' : page === 'technologies' ? 'Tech Stack' : page}</span>
+                <span>{page === 'projects' ? 'Student Portal' : page === 'technologies' ? 'Tech Stack' : page}</span>
                 <ArrowUpRight className="w-2.5 h-2.5 opacity-40" />
               </li>
             ))}

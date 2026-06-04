@@ -3,933 +3,747 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Play, 
-  X, 
-  Plus, 
-  Check, 
-  Trash2, 
-  DollarSign, 
-  Calendar, 
-  GraduationCap, 
-  Users, 
-  Utensils, 
-  Clock, 
-  ArrowRight, 
+  CheckCircle2, 
+  Circle, 
+  BookOpen, 
+  Award, 
   Sparkles, 
-  FileText, 
-  Brain, 
-  Layout, 
-  Sliders, 
-  TrendingUp, 
-  IceCream, 
-  AlertTriangle,
-  RefreshCw
+  Check, 
+  ChevronRight, 
+  Copy, 
+  RotateCcw, 
+  Terminal, 
+  Play, 
+  Calendar,
+  Layers,
+  Code2,
+  Cpu
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  CartesianGrid 
-} from 'recharts';
-import { STUDIO_PROJECTS } from '../data';
-import { ProjectItem } from '../types';
 
-// ==========================================
-// STATIC/MOCK DATA ASSETS FOR SIMULATOR LOADS
-// ==========================================
+interface DayItem {
+  day: number;
+  title: string;
+  category: 'HTML' | 'CSS' | 'JavaScript' | 'Advanced JS & APIs' | 'Full Projects & Deployment';
+  week: number;
+  description: string;
+  practicalQuiz: string;
+  codeSnippet: string;
+}
 
-const INITIAL_KOB_TASKS = [
-  { id: '1', title: 'Compile client wireframes', priority: 'medium', stage: 'todo' },
-  { id: '2', title: 'Write production API router', priority: 'high', stage: 'progress' },
-  { id: '3', title: 'Refactor chart animations', priority: 'low', stage: 'review' },
-  { id: '4', title: 'Optimize static CSS load', priority: 'medium', stage: 'done' },
-];
-
-const INITIAL_FREELANCE_INVOICES = [
-  { id: 'inv-1', client: 'Alpha Labs Inc', amount: 1850, status: 'paid', dueDate: '2026-06-15' },
-  { id: 'inv-2', client: 'SaaS Builder Co', amount: 3200, status: 'pending', dueDate: '2026-06-28' },
-  { id: 'inv-3', client: 'Apex Finance Ltd', amount: 950, status: 'overdue', dueDate: '2026-05-30' },
-];
-
-const INITIAL_RESTAURANT_TABLES = [
-  { id: 1, status: 'occupied', capacity: 4, currentBill: 125, waiter: 'Rajesh' },
-  { id: 2, status: 'ordered', capacity: 2, currentBill: 88, waiter: 'Ananya' },
-  { id: 3, status: 'billing', capacity: 6, currentBill: 345, waiter: 'Rajesh' },
-  { id: 4, status: 'vacant', capacity: 4, currentBill: 0, waiter: 'Ananya' },
-  { id: 5, status: 'vacant', capacity: 2, currentBill: 0, waiter: 'David' },
-  { id: 6, status: 'occupied', capacity: 8, currentBill: 210, waiter: 'David' },
-];
-
-const MOCK_RESTAURANT_ORDERS = [
-  { id: 'ord-104', item: 'Truffle Tagliolini', amount: 34, status: 'preparing', time: '11:42' },
-  { id: 'ord-103', item: 'Dry-aged Porterhouse', amount: 76, status: 'ready', time: '11:38' },
-  { id: 'ord-102', item: 'Chardonnay Gold Label', amount: 48, status: 'served', time: '11:32' },
-];
-
-const INITIAL_FLAVORS = [
-  { id: '1', name: 'Madagascar Vanilla', sales: 480, stock: 85, status: 'normal', color: '#FEF3C7' },
-  { id: '2', name: 'Dark Chocolate Fudge', sales: 620, stock: 24, status: 'critical', color: '#78350F' },
-  { id: '3', name: 'Alphonso Mango Seltzer', sales: 390, stock: 68, status: 'normal', color: '#F59E0B' },
-  { id: '4', name: 'Sicilian Pistachio', sales: 512, stock: 15, status: 'critical', color: '#10B981' },
-  { id: '5', name: 'Wild Strawberry Rose', sales: 310, stock: 92, status: 'normal', color: '#F43F5E' },
-];
-
-const MOCK_RESTAURANT_CHART = [
-  { hour: '12:00', sales: 420 },
-  { hour: '14:00', sales: 850 },
-  { hour: '16:00', sales: 390 },
-  { hour: '18:00', sales: 1240 },
-  { hour: '20:00', sales: 1890 },
-  { hour: '22:00', sales: 1450 },
+const ROADMAP_DAYS: DayItem[] = [
+  {
+    day: 1,
+    title: 'Setup VS Code',
+    category: 'HTML',
+    week: 1,
+    description: 'Install Visual Studio Code, set up useful extensions like Live Server, Prettier, and Auto Rename Tag. Learn how to open workspaces and run real-time local servers.',
+    practicalQuiz: 'Install Live Server extension and boot a Hello World HTML file on port 5500.',
+    codeSnippet: '<!-- Open folder in VS Code, right click index.html and press "Open with Live Server" -->'
+  },
+  {
+    day: 2,
+    title: 'HTML Basics',
+    category: 'HTML',
+    week: 1,
+    description: 'Learn fundamental document structures. Understand tags, paragraph headers, anchor tags, paragraph groupings, semantic divisions, and line break structures.',
+    practicalQuiz: 'Create a structure containing tags for h1-h6 headers, 3 paragraphs, and a relative link.',
+    codeSnippet: '<!DOCTYPE html>\n<html>\n<head>\n  <title>My First HTML Page</title>\n</head>\n<body>\n  <h1>Welcome to Web Dev</h1>\n  <p>Learning basics step-by-step.</p>\n</body>\n</html>'
+  },
+  {
+    day: 3,
+    title: 'Forms',
+    category: 'HTML',
+    week: 1,
+    description: 'Understand input types, labels, radio elements, checkbox collections, selectors, textareas, and submit buttons. Learn target attributes.',
+    practicalQuiz: 'Build a contact form containing text inputs, a dropdown Selector, and Submit button.',
+    codeSnippet: '<form action="/submit" method="POST">\n  <label for="student">Student Name:</label>\n  <input type="text" id="student" name="student" required>\n  <button type="submit">Submit Details</button>\n</form>'
+  },
+  {
+    day: 4,
+    title: 'Tables',
+    category: 'HTML',
+    week: 1,
+    description: 'Organize modular data using table headers (th), table rows (tr), cells (td), headers, footers, colspans, and rowspans.',
+    practicalQuiz: 'Generate a 3-column academic exam marksheet showcasing score matrices.',
+    codeSnippet: '<table border="1">\n  <thead>\n    <tr>\n      <th>Subject</th>\n      <th>Internal Mark</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <td>Physics</td>\n      <td>92%</td>\n    </tr>\n  </tbody>\n</table>'
+  },
+  {
+    day: 5,
+    title: 'CSS Basics',
+    category: 'CSS',
+    week: 1,
+    description: 'Understand inline, internal, and external CSS style rules. Learn font families, basic text-align formatting, colors, and background hex codes.',
+    practicalQuiz: 'Create an index.css file and link it to style parent bodies with deep violet tones.',
+    codeSnippet: '/* index.css stylesheet file example */\nbody {\n  background-color: #0b0a1a;\n  color: #f3f4f6;\n  font-family: sans-serif;\n}'
+  },
+  {
+    day: 6,
+    title: 'Box Model',
+    category: 'CSS',
+    week: 1,
+    description: 'Master the fundamental architectural layout block. Study borders, relative paddings, outer margins, content dimension calculations, and box-sizing constraints.',
+    practicalQuiz: 'Adjust margins on 3 nested custom container blocks to keep padding values uniform.',
+    codeSnippet: '.box-block {\n  width: 300px;\n  padding: 20px;\n  border: 1px solid #7c3aed;\n  margin: 15px;\n  box-sizing: border-box;\n}'
+  },
+  {
+    day: 7,
+    title: 'Landing Page',
+    category: 'HTML',
+    week: 1,
+    description: 'Combine all HTML structures and inline/external CSS to draft a complete, clean responsive landing page presentation for a student laboratory.',
+    practicalQuiz: 'Draft a visual preview with center headings, navigation anchors, forms, contact cards, and image assets.',
+    codeSnippet: '<header>\n  <nav>\n    <a href="#about">About</a> | <a href="#courses">Courses</a>\n  </nav>\n</header>'
+  },
+  {
+    day: 8,
+    title: 'Flexbox',
+    category: 'CSS',
+    week: 2,
+    description: 'Build responsive grids using flexible boxes. Understand flex justifications, items alignment, wraps, direction coordinates, dynamic flex rates, and absolute priorities.',
+    practicalQuiz: 'Align 4 menu buttons horizontally to spread evenly on broad desktop layouts.',
+    codeSnippet: '.flex-navbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  gap: 12px;\n}'
+  },
+  {
+    day: 9,
+    title: 'Grid',
+    category: 'CSS',
+    week: 2,
+    description: 'Harness two-dimensional grids. Configure template rows, column structures, gap spacing alignments, auto-flows, responsive screen adaptation formulas.',
+    practicalQuiz: 'Design a 3-column mock catalog grid layout using CSS grid parameters.',
+    codeSnippet: '.grid-layout {\n  display: grid;\n  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));\n  gap: 16px;\n}'
+  },
+  {
+    day: 10,
+    title: 'Animations',
+    category: 'CSS',
+    week: 2,
+    description: 'Configure interactive visual movements on key hover inputs using transitions, transforms, keyframes modifiers, scale loops, and fade rotations.',
+    practicalQuiz: 'Animate a submit button to double scale on hovering state.',
+    codeSnippet: '.btn-animate {\n  transition: transform 0.2s ease;\n}\n.btn-animate:hover {\n  transform: scale(1.05);\n}'
+  },
+  {
+    day: 11,
+    title: 'Responsive Design',
+    category: 'CSS',
+    week: 2,
+    description: 'Utilize CSS Media Queries, fluid percentage lengths, viewport tags, max-widths, and conditional styles.',
+    practicalQuiz: 'Define custom grid columns that shift from double to single block stacks under 768px.',
+    codeSnippet: '@media (max-width: 768px) {\n  .sidebar-layout {\n    display: none; /* Hide on smaller viewports */\n  }\n}'
+  },
+  {
+    day: 12,
+    title: 'Navbar',
+    category: 'CSS',
+    week: 2,
+    description: 'Construct a sticky header featuring menu transitions, floating elements, brand headers, responsive links, and mobile-responsive alignment logic.',
+    practicalQuiz: 'Assemble a sticky header fixed perfectly to top heights.',
+    codeSnippet: '.sticky-nav {\n  position: sticky;\n  top: 0;\n  z-index: 50;\n  backdrop-filter: blur(12px);\n}'
+  },
+  {
+    day: 13,
+    title: 'Dashboard UI',
+    category: 'CSS',
+    week: 2,
+    description: 'Assemble multi-panel screen grids containing progress boards, visual stat charts, tables, sidebar navigators, and clean custom action icons.',
+    practicalQuiz: 'Assemble clean responsive card widgets framed in structured borders.',
+    codeSnippet: '/* UI Frame wrapper */\n.dashboard-card {\n  background: #0f0a2e;\n  border-radius: 16px;\n  padding: 24px;\n}'
+  },
+  {
+    day: 14,
+    title: 'Portfolio',
+    category: 'CSS',
+    week: 2,
+    description: 'Synthesize standard display properties into a beautiful, personalized, responsive portfolio presentation outlining contact links and project cards.',
+    practicalQuiz: 'Refactor spacing margins, font size hierarchies, visual contrast levels, and interactive tags.',
+    codeSnippet: '<!-- Showcase Section -->\n<section id="portfolio-showcase">\n  <h2>My Web Showcase</h2>\n</section>'
+  },
+  {
+    day: 15,
+    title: 'Variables',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Step into logic engines. Understand how variables retain memory states. Study string formatting, numeric mathematics, logical let vs const declarations, block scopes.',
+    practicalQuiz: 'Initialize dynamic state parameters calculating cumulative mark averages inside a template console.',
+    codeSnippet: 'const rawScores = 85;\nlet finalGrade = rawScores + 5;\nconsole.log(`Updated Mark is: ${finalGrade}`);'
+  },
+  {
+    day: 16,
+    title: 'Functions',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Design modular code blocks. Setup parameter inputs, return expressions, scope constraints, modern arrow configurations, functional declarations.',
+    practicalQuiz: 'Draft a conversion script analyzing target parameters to output calculated percentages.',
+    codeSnippet: 'const computePercentage = (score, total) => {\n  return Math.round((score / total) * 100);\n};'
+  },
+  {
+    day: 17,
+    title: 'DOM',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Interact with visual elements in real-time. Understand DOM query selections, innerText updates, classList styling edits, and listening to mouse interactions.',
+    practicalQuiz: 'Write a script listening to user click parameters on buttons to toggle high contrast layout states.',
+    codeSnippet: 'const actionBtn = document.querySelector("#action");\nactionBtn.addEventListener("click", () => {\n  document.body.classList.toggle("light-mode");\n});'
+  },
+  {
+    day: 18,
+    title: 'Validation',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Establish smart rules to intercept dynamic form submissions. Verify input string lengths, valid emails formats, numerical dimensions, and output real-time validation warnings.',
+    practicalQuiz: 'Inhibit standard submission events on contact forms if text queries enter empty values.',
+    codeSnippet: 'const regForm = document.querySelector("form");\nregForm.addEventListener("submit", (e) => {\n  if(!input.value) e.preventDefault();\n});'
+  },
+  {
+    day: 19,
+    title: 'Arrays',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Manage rich list states. Harness iteration loops, collection sorting, items filter queries, mapping conversions, find structures, indexes.',
+    practicalQuiz: 'Create a list of 5 course subjects and filter out assignments with deadlines older than today.',
+    codeSnippet: 'const tasks = [{id: 1, status: "pending"}];\nconst urgent = tasks.filter(t => t.status === "pending");'
+  },
+  {
+    day: 20,
+    title: 'Local Storage',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Maintain persistent memory across reloading queries using browser storage APIs. Learn how to transform data tables via JSON stringification.',
+    practicalQuiz: 'Write user input text directly into storage buffers to recall the saved configuration on reload.',
+    codeSnippet: 'localStorage.setItem("user_theme_index", "dark");\nconst currentTheme = localStorage.getItem("user_theme_index");'
+  },
+  {
+    day: 21,
+    title: 'To-Do App',
+    category: 'JavaScript',
+    week: 3,
+    description: 'Draft an interactive, persistence-supported interactive list to manage daily user action items.',
+    practicalQuiz: 'Assemble a fully responsive, stateful item manager dashboard that automatically stores entries inside local memory systems.',
+    codeSnippet: '/* Combine array state tracking with localStorage and DOM query selectors */'
+  },
+  {
+    day: 22,
+    title: 'API Basics',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Understand how internet requests work. Analyze server states, response JSON schemas, query headers, request method coordinates (GET, POST).',
+    practicalQuiz: 'Study standard HTTP response structures and response codes (e.g. 200 OK, 404 Not Found).',
+    codeSnippet: '// JSON format placeholder sample\n{\n  "status": "success",\n  "data": { "userId": 101 }\n}'
+  },
+  {
+    day: 23,
+    title: 'Fetch API',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Master async/await patterns. Pull server information using fetch parameters and map JSON objects directly into interactive UI lists dynamic components.',
+    practicalQuiz: 'Run an async function pulling sample resource data lists from mock online endpoints.',
+    codeSnippet: 'async function downloadResources() {\n  const res = await fetch("https://jsonplaceholder.typicode.com/todos/1");\n  const obj = await res.json();\n}'
+  },
+  {
+    day: 24,
+    title: 'Weather App',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Pull operational thermodynamic coordinates from weather parameters. Read temperature grades and convert them into live display visual blocks inside cards.',
+    practicalQuiz: 'Create a clean layout showing relative wind metrics, local names, and temperatures.',
+    codeSnippet: '/* Connect city inputs with fetch queries targeting public climate servers */'
+  },
+  {
+    day: 25,
+    title: 'Student Dashboard',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Create an integrated workspace portal managing academic assignments, marks spreadsheets, event calendars, and progress tickers.',
+    practicalQuiz: 'Construct status metrics matching attendance percentages linked to interactive input scales.',
+    codeSnippet: '/* Dynamic student spreadsheet calculations */'
+  },
+  {
+    day: 26,
+    title: 'Expense Tracker',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Track, sum, and format monthly numeric expense logs. Understand how to push individual items and recalculate aggregate balances mathematically.',
+    practicalQuiz: 'Formulate lists dividing debit entries while tracking ongoing overall cumulative balance sums.',
+    codeSnippet: 'const expenseList = [500, 1200, 310];\nconst aggregateExpense = expenseList.reduce((acc, curr) => acc + curr, 0);'
+  },
+  {
+    day: 27,
+    title: 'E-Commerce Page',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Create interactive web store designs. Implement interactive shopping cart structures, update total cost metrics, clear items checklists.',
+    practicalQuiz: 'Build dynamic items arrays that update counters whenever click actions add them to shopping baskets.',
+    codeSnippet: '/* Manage multi-item cart aggregates in storage */'
+  },
+  {
+    day: 28,
+    title: 'College Portal',
+    category: 'Advanced JS & APIs',
+    week: 4,
+    description: 'Establish unified hubs logging academic announcements, lab evaluations scheduling dates, and course syllabi folders.',
+    practicalQuiz: 'Group calendar events side-by-side using responsive columns.',
+    codeSnippet: '<!-- Announcement card structure -->'
+  },
+  {
+    day: 29,
+    title: 'Portfolio Final',
+    category: 'Full Projects & Deployment',
+    week: 5,
+    description: 'Integrate your achievements into a finalized clean main hub website. Ensure optimal contrast, speed performance, search indexes optimization.',
+    practicalQuiz: 'Add quick direct navigators, clean transition hooks, beautiful negative spaces, and customized typography.',
+    codeSnippet: '/* Standardized CSS font configurations and layout blocks compilation */'
+  },
+  {
+    day: 30,
+    title: 'Deployment',
+    category: 'Full Projects & Deployment',
+    week: 5,
+    description: 'Deploy files online live to global hosting distributions like Netlify, Vercel, or GitHub Pages. Map your public access links.',
+    practicalQuiz: 'Publish your workspace portfolio to production branch distributions on HTTPS domains.',
+    codeSnippet: '# Build production static distributions directory\nnpm run build'
+  }
 ];
 
 export default function Projects() {
-  const [activeProject, setActiveProject] = useState<ProjectItem | null>(null);
+  const [completedDays, setCompletedDays] = useState<number[]>([]);
+  const [selectedDay, setSelectedDay] = useState<DayItem>(ROADMAP_DAYS[0]);
+  const [selectedWeek, setSelectedWeek] = useState<number | 'all'>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // States for FreelancerOS Simulator
-  const [tasks, setTasks] = useState(INITIAL_KOB_TASKS);
-  const [invoices, setInvoices] = useState(INITIAL_FREELANCE_INVOICES);
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [invClient, setInvClient] = useState('');
-  const [invAmount, setInvAmount] = useState('');
-
-  // States for Restaurant Analytics Simulator
-  const [restTables, setRestTables] = useState(INITIAL_RESTAURANT_TABLES);
-  const [restOrders, setRestOrders] = useState(MOCK_RESTAURANT_ORDERS);
-  const [newOrderName, setNewOrderName] = useState('');
-  const [newOrderPrice, setNewOrderPrice] = useState('');
-
-  // States for Ice Cream Shop Simulator
-  const [flavors, setFlavors] = useState(INITIAL_FLAVORS);
-
-  // States for AI Notes Hub Simulator
-  const [noteContent, setNoteContent] = useState(
-    "Mohana Labs client report:\n\nOur launch database consists of 25,000 active daily profiles. Our overall order processing latency has decreased by 15 percent week-over-week. We need to schedule a final infrastructure safety audit before setting up Cloud Run containers."
-  );
-  const [aiOutcome, setAiOutcome] = useState('');
-  const [isAiProcessing, setIsAiProcessing] = useState(false);
-  const [aiAnalysisType, setAiAnalysisType] = useState('');
-
-  // ERP State parameters
-  const [selectedCampus, setSelectedCampus] = useState('Central Campus');
-  const [gradeInput, setGradeInput] = useState<Record<string, number>>({ math: 88, physics: 92, db: 85, ai: 95 });
-
-  // Reset helpers
-  const handleOpenSandbox = (project: ProjectItem) => {
-    setActiveProject(project);
-    // Restart sims
-    setTasks(INITIAL_KOB_TASKS);
-    setInvoices(INITIAL_FREELANCE_INVOICES);
-    setRestTables(INITIAL_RESTAURANT_TABLES);
-    setRestOrders(MOCK_RESTAURANT_ORDERS);
-    setFlavors(INITIAL_FLAVORS);
-    setAiOutcome('');
-    setIsAiProcessing(false);
-  };
-
-  // -------------------------------------------------------------
-  // SIMULATOR INTERACTION LOGIC
-  // -------------------------------------------------------------
-
-  // 1. FreelancerOS Actions
-  const handleAddTask = () => {
-    if (!newTaskTitle.trim()) return;
-    setTasks([
-      ...tasks,
-      {
-        id: Date.now().toString(),
-        title: newTaskTitle,
-        priority: 'medium',
-        stage: 'todo'
+  // Initialize and load completed list from local storage
+  useEffect(() => {
+    const saved = localStorage.getItem('webdev_30day_roadmap_completed');
+    if (saved) {
+      try {
+        setCompletedDays(JSON.parse(saved));
+      } catch (e) {
+        setCompletedDays([]);
       }
-    ]);
-    setNewTaskTitle('');
+    }
+  }, []);
+
+  // Save changes to Local Storage
+  const saveChange = (updated: number[]) => {
+    setCompletedDays(updated);
+    localStorage.setItem('webdev_30day_roadmap_completed', JSON.stringify(updated));
   };
 
-  const handleToggleTaskStage = (taskId: string) => {
-    setTasks(tasks.map(t => {
-      if (t.id === taskId) {
-        const stages: ('todo' | 'progress' | 'review' | 'done')[] = ['todo', 'progress', 'review', 'done'];
-        const nextIdx = (stages.indexOf(t.stage) + 1) % stages.length;
-        return { ...t, stage: stages[nextIdx] };
-      }
-      return t;
-    }));
+  // Toggle single day click
+  const handleToggleDay = (day: number) => {
+    let next: number[];
+    if (completedDays.includes(day)) {
+      next = completedDays.filter(d => d !== day);
+      triggerToast(`Day ${day} marked as continuous learning.`);
+    } else {
+      next = [...completedDays, day].sort((a,b) => a-b);
+      triggerToast(`🎉 Awesome! Day ${day} completed!`);
+    }
+    saveChange(next);
   };
 
-  const handleAddInvoice = () => {
-    const amtNum = parseFloat(invAmount);
-    if (!invClient.trim() || isNaN(amtNum)) return;
-    setInvoices([
-      {
-        id: 'inv-' + Date.now(),
-        client: invClient,
-        amount: amtNum,
-        status: 'pending',
-        dueDate: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString().split('T')[0]
-      },
-      ...invoices
-    ]);
-    setInvClient('');
-    setInvAmount('');
+  // Helper to mark everything completed or reset
+  const handleMarkAll = () => {
+    const all = ROADMAP_DAYS.map(d => d.day);
+    saveChange(all);
+    triggerToast('All 30 Days successfully marked as Shipped!');
   };
 
-  // 2. Restaurant Actions
-  const handleTableStatusShift = (tableId: number) => {
-    setRestTables(restTables.map(t => {
-      if (t.id === tableId) {
-        const statuses: ('vacant' | 'occupied' | 'ordered' | 'billing')[] = ['vacant', 'occupied', 'ordered', 'billing'];
-        const nextIdx = (statuses.indexOf(t.status) + 1) % statuses.length;
-        const bills = { vacant: 0, occupied: 45, ordered: 128, billing: 260 };
-        return {
-          ...t,
-          status: statuses[nextIdx],
-          currentBill: bills[statuses[nextIdx]]
-        };
-      }
-      return t;
-    }));
+  const handleResetAll = () => {
+    saveChange([]);
+    triggerToast('Roadmap progress successfully reset.');
   };
 
-  const handleAddRestOrder = () => {
-    const prVal = parseFloat(newOrderPrice);
-    if (!newOrderName.trim() || isNaN(prVal)) return;
-    setRestOrders([
-      {
-        id: 'ord-' + Math.floor(Math.random() * 500),
-        item: newOrderName,
-        amount: prVal,
-        status: 'preparing',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      },
-      ...restOrders
-    ]);
-    setNewOrderName('');
-    setNewOrderPrice('');
-  };
-
-  // Computed metrics for Restaurant
-  const restaurantLiveStats = () => {
-    const totalActiveTables = restTables.filter(t => t.status !== 'vacant').length;
-    const occupancyRate = Math.round((totalActiveTables / restTables.length) * 100);
-    const activeEarnings = restTables.reduce((sum, t) => sum + t.currentBill, 0);
-    return { occupancyRate, activeEarnings, activeTables: totalActiveTables };
-  };
-
-  // 3. Ice Cream Shop Actions
-  const handleAdjustStock = (flavorId: string, newStock: number) => {
-    setFlavors(flavors.map(f => {
-      if (f.id === flavorId) {
-        return {
-          ...f,
-          stock: newStock,
-          status: newStock <= 30 ? 'critical' : 'normal'
-        };
-      }
-      return f;
-    }));
-  };
-
-  // 4. AI Notes Hub prompt processor
-  const handleTriggerFauxAI = (mode: string) => {
-    setIsAiProcessing(true);
-    setAiAnalysisType(mode);
-    setAiOutcome('');
-
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
     setTimeout(() => {
-      setIsAiProcessing(false);
-      let response = '';
-      if (mode === 'summarize') {
-        response = "### 📋 Cohort Summary \n- **Institutional Reach**: 25,000 daily academic scholarly profiles.\n- **Optimized Latency**: Average transaction/order delays reduced by 15% WoW.\n- **Critical Action Required**: Complete high-scale infrastructure security evaluations prior to cloud-container containerization.";
-      } else if (mode === 'polish') {
-        response = "*Mohana Labs Strategic Executive Update*\n\n\"Analytical telemetry confirms our system accommodates 25k+ active daily sessions. Furthermore, deployment optimization efforts successfully reduced endpoint rendering and transactional bottlenecks by 15% WoW. In accordance with delivery schedules, an intensive cloud-native security audit remains the immediate launch blocker.\"";
-      } else if (mode === 'actions') {
-        response = "### 🛠️ Generated Action Framework\n- [ ] **SEC-04**: Draft formal infrastructure check sheets.\n- [ ] **OPS-12**: Provision secondary elastic nodes in Google Cloud Run.\n- [ ] **BIO-01**: Map metric dashboards directly containing the live WoW delta logs.";
-      }
-      setAiOutcome(response);
-    }, 1500);
+      setToastMessage(null);
+    }, 2800);
   };
 
-  // Computed academic ERP score
-  const erpGPA = () => {
-    const keys = Object.keys(gradeInput);
-    const total = keys.reduce((sum, key) => sum + (gradeInput[key] || 0), 0);
-    const avg = total / keys.length;
-    const gpa = (avg / 25).toFixed(2); // 100 max score map to 4.0 scale
-    return { gpa, avg: avg.toFixed(1) };
+  // Copy code utility
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    triggerToast('Code snippet copied to clipboard!');
   };
+
+  // Filter calculations
+  const filteredDays = ROADMAP_DAYS.filter(d => {
+    const matchesWeek = selectedWeek === 'all' || d.week === selectedWeek;
+    const matchesCategory = selectedCategory === 'all' || d.category === selectedCategory;
+    return matchesWeek && matchesCategory;
+  });
+
+  const completionPercent = Math.round((completedDays.length / ROADMAP_DAYS.length) * 100);
+
+  // Quick stat grouping
+  const statsByWeek = [1, 2, 3, 4, 5].map(wk => {
+    const daysInWeek = ROADMAP_DAYS.filter(d => d.week === wk).map(d => d.day);
+    const completedInWeek = completedDays.filter(day => daysInWeek.includes(day)).length;
+    return {
+      week: wk,
+      total: daysInWeek.length,
+      completed: completedInWeek
+    };
+  });
 
   return (
-    <section className="relative py-20 px-4 md:px-8 bg-[#09081a]">
-      {/* Lights */}
-      <div className="absolute top-1/4 right-5 w-96 h-96 rounded-full glow-spot-2 pointer-events-none" />
-
-      <div className="max-w-7xl mx-auto space-y-16 relative z-10">
+    <div id="projects_view_wrapper" className="w-full">
+      <section className="relative py-16 px-4 md:px-8 bg-[#040212]" id="labs_master_container">
         
-        {/* Header Block */}
-        <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-block bg-amber-950/30 border border-amber-900/40 px-3 py-1 rounded-full">
-            <span className="font-mono text-[9px] tracking-widest text-[#F59E0B] font-semibold uppercase">
-              STUDIO ARCHIVE
-            </span>
-          </div>
-          <h2 className="font-display font-medium text-3xl sm:text-4xl text-white tracking-tight">
-            Our Selected Product Releases <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-indigo-100 to-purple-400">
-              Complete with Interactive Sandboxes
-            </span>
-          </h2>
-          <p className="text-gray-400 text-xs sm:text-sm max-w-xl mx-auto leading-relaxed">
-            Click on any release card below to instantly boot up its <strong>live interactive sandbox tracker simulation</strong> directly inside the browser viewport.
-          </p>
-        </div>
+        {/* Futuristic Grid Overlay Matching branding styles */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#150e41_1px,transparent_1px),linear-gradient(to_bottom,#150e41_1px,transparent_1px)] bg-[size:3.5rem_3.5rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)] opacity-25 pointer-events-none" />
+        <div className="absolute top-10 left-10 w-96 h-96 rounded-full bg-violet-900/10 blur-[130px] pointer-events-none" />
+        <div className="absolute bottom-10 right-10 w-[450px] h-[450px] rounded-full bg-indigo-950/20 blur-[130px] pointer-events-none" />
 
-        {/* Project Board */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {STUDIO_PROJECTS.map((project) => (
-            <div
-              key={project.id}
-              id={`project_card_${project.id}`}
-              className="glass-panel rounded-3xl p-6 border border-white/10 flex flex-col justify-between hover:border-purple-500/30 transition-all duration-300 relative group"
-            >
-              {/* Highlight Tag */}
-              <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#2D2962] px-3 py-0.5 rounded-full border border-white/10 text-[10px] font-mono text-slate-400 group-hover:text-amber-400 transition-colors">
-                {project.category}
+        <div className="max-w-7xl mx-auto space-y-10 relative z-10">
+          
+          {/* Header Banner Block containing interactive progress metrics */}
+          <div className="bg-[#07051e]/90 border border-indigo-950/80 p-6 md:p-8 rounded-3xl relative overflow-hidden backdrop-blur-md">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+              
+              {/* Title descriptions */}
+              <div className="lg:col-span-7 space-y-3 text-left">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-[9px] tracking-widest text-[#a855f7] font-semibold bg-purple-950/60 px-2.5 py-1 rounded-md uppercase border border-purple-800/40">
+                    Syllabus Planner
+                  </span>
+                  <span className="w-2 h-2 rounded-full bg-[#fbd38d] animate-pulse" />
+                  <span className="text-[10px] text-gray-400 font-mono">Offline Progress Tracking</span>
+                </div>
+                <h2 id="main_title_section" className="font-display font-medium text-3xl text-white tracking-tight">
+                  30-Day Web Development Masterclass
+                </h2>
+                <p className="text-gray-400 text-xs max-w-xl leading-relaxed">
+                  Focus on one dedicated lesson daily. Learn step-by-step from raw VS Code setup, HTML tags, responsive CSS layouts, interactive JavaScript, server APIs integration, up to cloud web deployment.
+                </p>
               </div>
 
-              <div className="space-y-6">
-                <div className="space-y-2 pt-2">
-                  <h3 className="font-display font-medium text-lg text-white group-hover:text-amber-300 transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="text-xs text-slate-400 leading-relaxed font-sans font-light">
-                    {project.description}
+              {/* Progress visual widgets */}
+              <div className="lg:col-span-5 bg-[#0a0729]/80 border border-indigo-950 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Award className="w-5 h-5 text-amber-400" />
+                    <span className="text-xs font-mono text-slate-300">Total Completed Sprints</span>
+                  </div>
+                  <span className="text-xl font-mono font-bold text-amber-400">
+                    {completedDays.length} <span className="text-stone-500 text-sm">/ 30 Days</span>
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="space-y-1.5">
+                  <div className="w-full bg-[#12102e] rounded-full h-2.5 overflow-hidden border border-indigo-950/80">
+                    <div 
+                      className="bg-gradient-to-r from-purple-500 via-amber-500 to-emerald-500 h-full transition-all duration-500"
+                      style={{ width: `${completionPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between items-center text-[10px] font-mono text-gray-500">
+                    <span>{completionPercent}% Completed</span>
+                    <span>{30 - completedDays.length} Days Remain</span>
+                  </div>
+                </div>
+
+                {/* Reset or fill actions */}
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleMarkAll}
+                    className="flex-1 py-1.5 bg-[#7c3aed]/10 hover:bg-[#7c3aed]/20 text-[#a855f7] border border-[#a855f7]/30 rounded-lg text-[10px] font-mono transition-colors cursor-pointer"
+                  >
+                    Mark All 30 Days Done
+                  </button>
+                  <button
+                    onClick={handleResetAll}
+                    className="py-1.5 px-3 bg-white/5 hover:bg-red-950/40 text-gray-400 hover:text-red-400 border border-white/5 hover:border-red-500/20 rounded-lg text-[10px] font-mono transition-all cursor-pointer flex items-center justify-center space-x-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Reset</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div className="bg-emerald-950/90 border border-emerald-500/40 text-emerald-300 font-mono text-[11px] px-5 py-2.5 rounded-full max-w-md mx-auto text-center flex items-center justify-center space-x-2 shadow-xl animate-fade-in backdrop-blur-md">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+          {/* Task Filters & Interactive Columns */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Left side list containing 30-Day list */}
+            <div className="lg:col-span-7 space-y-4">
+              
+              {/* Navigation Filters */}
+              <div className="bg-[#08051e]/90 border border-indigo-950 p-4 rounded-2xl space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <span className="font-mono text-[10px] text-gray-400 uppercase tracking-widest block font-bold">
+                    Filter By Lesson Module
+                  </span>
+                  
+                  <div className="flex flex-wrap gap-1">
+                    {['all', 'HTML', 'CSS', 'JavaScript', 'Advanced JS & APIs', 'Full Projects & Deployment'].map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-2.5 py-1 rounded text-[10.5px] font-mono transition-all cursor-pointer ${
+                          selectedCategory === cat
+                            ? 'bg-[#a855f7]/20 text-[#c084fc] border border-[#a855f7]/50'
+                            : 'text-gray-500 hover:text-stone-300'
+                        }`}
+                      >
+                        {cat === 'all' ? 'All Subjects' : cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 pt-2 border-t border-indigo-950/50">
+                  <span className="font-mono text-[10px] text-gray-500 uppercase shrink-0">Weeks:</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => setSelectedWeek('all')}
+                      className={`px-2.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer ${
+                        selectedWeek === 'all' ? 'bg-indigo-600 text-white' : 'bg-transparent text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      All Weeks
+                    </button>
+                    {[1, 2, 3, 4, 5].map((wk) => {
+                      const stats = statsByWeek.find(s => s.week === wk);
+                      return (
+                        <button
+                          key={wk}
+                          onClick={() => setSelectedWeek(wk)}
+                          className={`px-2.5 py-0.5 rounded text-[10px] font-mono transition-colors cursor-pointer flex items-center space-x-1.5 ${
+                            selectedWeek === wk ? 'bg-indigo-600 text-white font-bold' : 'bg-[#0f0c30] text-gray-400 hover:text-white border border-indigo-950/60'
+                          }`}
+                        >
+                          <span>Wk {wk}</span>
+                          <span className="text-[8px] bg-black/40 px-1 py-0.1 rounded text-[#a855f7]">
+                            {stats?.completed}/{stats?.total}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Day items lists stack */}
+              <div className="space-y-2 max-h-[560px] overflow-y-auto pr-1">
+                {filteredDays.length === 0 ? (
+                  <div className="py-20 text-center text-xs text-gray-500 border border-dashed border-indigo-950 rounded-2xl flex flex-col items-center justify-center space-y-3">
+                    <BookOpen className="w-10 h-10 text-indigo-900" />
+                    <span>No days match current selection metrics.</span>
+                  </div>
+                ) : (
+                  filteredDays.map((d) => {
+                    const isCompleted = completedDays.includes(d.day);
+                    const isSelected = selectedDay.day === d.day;
+                    
+                    return (
+                      <div
+                        key={d.day}
+                        onClick={() => setSelectedDay(d)}
+                        className={`group p-3.5 rounded-xl border transition-all flex items-center justify-between gap-4 cursor-pointer ${
+                          isSelected 
+                            ? 'bg-[#120e3a] border-purple-500/40 shadow-lg shadow-[#7C3AED]/5' 
+                            : 'bg-[#08051e] border-indigo-950/80 hover:border-indigo-900 hover:bg-[#0c092c]'
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3.5 flex-1 min-w-0">
+                          {/* Checked Checkbox Icon */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleDay(d.day);
+                            }}
+                            className="p-1 rounded-md border border-white/5 hover:bg-white/5 transition-colors cursor-pointer"
+                          >
+                            {isCompleted ? (
+                              <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                            ) : (
+                              <Circle className="w-5 h-5 text-slate-500 group-hover:text-amber-400 transition-colors" />
+                            )}
+                          </button>
+
+                          {/* Titles */}
+                          <div className="text-left min-w-0">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-mono text-[10px] text-[#a855f7] bg-purple-950/50 px-1.5 py-0.2 rounded-md">
+                                Day {d.day}
+                              </span>
+                              <span className="text-[9px] text-[#f59e0b] font-mono">
+                                Week {d.week}
+                              </span>
+                            </div>
+                            <h4 className={`text-xs font-semibold text-white mt-1 truncate ${isCompleted ? 'line-through text-slate-500' : ''}`}>
+                              {d.title}
+                            </h4>
+                          </div>
+                        </div>
+
+                        {/* Category Badge & Detail Arrow */}
+                        <div className="flex items-center space-x-2 shrink-0">
+                          <span className="hidden md:inline bg-[#1c123f]/80 text-[#d8b4FE] border border-purple-900/40 text-[9px] font-mono px-2 py-0.5 rounded">
+                            {d.category}
+                          </span>
+                          <ChevronRight className={`w-4 h-4 text-slate-500 transition-transform group-hover:translate-x-1 ${
+                            isSelected ? 'text-amber-400 translate-x-1' : ''
+                          }`} />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+            </div>
+
+            {/* Right side Detail Dashboard Panel */}
+            <div className="lg:col-span-5 space-y-4">
+              
+              {/* Daily Syllabus Content Drawer */}
+              <div className="bg-[#08051e] border border-purple-950/50 rounded-3xl p-6 space-y-6 relative overflow-hidden backdrop-blur-md">
+                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+                
+                {/* Visual Header card */}
+                <div className="flex items-start justify-between pb-4 border-b border-indigo-950">
+                  <div className="space-y-1 text-left">
+                    <span className="bg-amber-950/40 border border-amber-900/40 text-amber-400 text-[10px] font-mono px-2 py-0.5 rounded uppercase">
+                      Active Day {selectedDay.day} Study File
+                    </span>
+                    <h3 className="font-display font-medium text-white text-lg mt-2">
+                      {selectedDay.title}
+                    </h3>
+                    <p className="text-[10px] text-gray-500 font-mono">
+                      Module Category: <span className="text-purple-400">{selectedDay.category}</span>
+                    </p>
+                  </div>
+
+                  <div className="w-12 h-12 rounded-xl bg-indigo-950/60 border border-indigo-900/60 flex items-center justify-center shrink-0">
+                    <Code2 className="w-5 h-5 text-[#a855f7]" />
+                  </div>
+                </div>
+
+                {/* Lesson Description */}
+                <div className="space-y-2 text-left">
+                  <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest block font-bold">
+                    Lesson Overview
+                  </span>
+                  <p className="text-xs text-stone-300 leading-relaxed font-sans">
+                    {selectedDay.description}
                   </p>
                 </div>
 
-                {/* Tech tags */}
-                <div className="flex flex-wrap gap-1.5">
-                  {project.tech.map((t, idx) => (
-                    <span key={idx} className="bg-white/5 text-purple-300 border border-white/10 text-[10px] font-mono px-2.5 py-0.5 rounded-md">
-                      {t}
-                    </span>
-                  ))}
+                {/* Practical Milestone Challenge */}
+                <div className="p-4 bg-purple-950/20 border border-purple-900/30 rounded-2xl text-left space-y-2">
+                  <span className="font-mono text-[9px] text-[#a855f7] uppercase tracking-widest block font-bold">
+                    Daily Homework/Milestone Check
+                  </span>
+                  <p className="text-xs text-stone-200">
+                    {selectedDay.practicalQuiz}
+                  </p>
                 </div>
 
-                {/* Live Core Meta */}
-                <div className="bg-[#2D2962]/40 rounded-2xl p-4 border border-white/10 flex items-center justify-between">
+                {/* Sample Code Editor Block */}
+                <div className="space-y-2 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[9px] text-gray-400 uppercase tracking-widest block font-bold">
+                      Interactive Practice Blueprint
+                    </span>
+                    <button
+                      onClick={() => handleCopyCode(selectedDay.codeSnippet)}
+                      className="text-[9px] text-amber-400 hover:text-white font-mono flex items-center space-x-1 cursor-pointer"
+                      title="Copy code to clipboards"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy Template</span>
+                    </button>
+                  </div>
+
+                  <div className="bg-[#040212] p-4 rounded-xl border border-indigo-950/80 max-h-48 overflow-y-auto relative group">
+                    <pre className="text-[11px] font-mono text-purple-300 leading-normal block whitespace-pre-wrap">
+                      {selectedDay.codeSnippet}
+                    </pre>
+                  </div>
+                </div>
+
+                {/* Quick Task completion slider trigger card */}
+                <div className="pt-4 border-t border-indigo-950 flex items-center justify-between">
+                  <span className="text-[10px] font-mono text-gray-400">
+                    Day status: {completedDays.includes(selectedDay.day) ? (
+                      <span className="text-emerald-400 font-bold">● Completed</span>
+                    ) : (
+                      <span className="text-rose-400">○ Pending Completion</span>
+                    )}
+                  </span>
+
+                  <button
+                    onClick={() => handleToggleDay(selectedDay.day)}
+                    className={`px-4 py-2 text-xs font-mono rounded-lg transition-all cursor-pointer flex items-center space-x-1.5 ${
+                      completedDays.includes(selectedDay.day)
+                        ? 'bg-emerald-900/30 text-emerald-400 border border-emerald-500/20'
+                        : 'bg-indigo-600 hover:bg-[#7c3aed] text-white'
+                    }`}
+                  >
+                    {completedDays.includes(selectedDay.day) ? (
+                      <>
+                        <Check className="w-3 h-3 text-emerald-400" />
+                        <span>Toggle Status</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>Mark as Completed</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Motivational Sprint Stats Cards */}
+              <div className="bg-gradient-to-br from-indigo-950/30 to-purple-950/20 border border-indigo-950 rounded-2xl p-4 text-left">
+                <div className="flex items-start space-x-3.5">
+                  <span className="text-xl">🏆</span>
                   <div>
-                    <span className="text-[9px] font-mono text-slate-500 uppercase tracking-widest block font-bold">Primary Metric Value</span>
-                    <span className="text-sm font-mono font-bold text-white mt-1 block">
-                      {project.metrics.value}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-[9px] font-mono text-slate-500 uppercase block font-bold">Focus</span>
-                    <span className="text-[11px] text-amber-400 font-sans block mt-1 font-medium">
-                      {project.metrics.label}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Launcher */}
-              <div className="mt-8 pt-4 border-t border-white/10 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-emerald-400 flex items-center space-x-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Interactive Sim Available</span>
-                </span>
-                <button
-                  onClick={() => handleOpenSandbox(project)}
-                  id={`btn_launch_sandbox_${project.id}`}
-                  className="flex items-center space-x-1.5 px-4 py-2 bg-white/5 hover:bg-[#7C3AED] text-white rounded-xl text-[11px] font-semibold transition-all border border-white/10 hover:border-purple-500 cursor-pointer"
-                >
-                  <span>Launch Live Platform</span>
-                  <Play className="w-3 h-3 fill-current text-amber-400 shrink-0" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Modal Overlay for Live Sandboxes */}
-        {activeProject && (
-          <div 
-            id="sandbox_modal_backdrop"
-            className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50 overflow-y-auto"
-          >
-            <div 
-              id="sandbox_modal_body" 
-              className="bg-[#0b0a1f] border border-indigo-900 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl relative flex flex-col"
-            >
-              
-              {/* Modal Header */}
-              <div className="p-6 border-b border-indigo-950 flex items-center justify-between bg-indigo-950/30 sticky top-0 z-10 backdrop-blur-md">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-900/60 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-amber-400" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-white text-md">
-                      {activeProject.title} <span className="text-xs font-mono text-[#7C3AED] font-light">({activeProject.category})</span>
-                    </h3>
-                    <p className="text-[10px] text-gray-400 font-mono tracking-wider uppercase">MOHANA LABS • INTERACTIVE INTEGRATION SANDBOX v2.1</p>
+                    <span className="text-[10px] text-amber-400 font-mono uppercase block">Syllabus Certificate Milestones</span>
+                    <p className="text-stone-300 text-xs font-semibold mt-0.5">
+                      {completionPercent >= 100 
+                        ? '🏆 Level 5: Master Developer Cert Shipped!' 
+                        : completionPercent >= 75 
+                          ? '🚀 Level 4: Project Pro Ready (Weeks 1-4 completed!)' 
+                          : completionPercent >= 50 
+                            ? '💻 Level 3: Javascript Engine Complete!' 
+                            : completionPercent >= 25 
+                              ? '🎨 Level 2: CSS Layout Shipped!' 
+                              : '📘 Level 1: Ready to Begin'}
+                    </p>
+                    <p className="text-[9px] text-[#a855f7] font-mono mt-1">
+                      Check off 30 distinct daily syllabus boxes to complete the masterclass.
+                    </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setActiveProject(null)}
-                  className="p-1.5 rounded-lg bg-indigo-950 hover:bg-red-950 hover:text-red-400 transition-colors border border-indigo-900 shrink-0"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
-              {/* Modular Sandbox Content */}
-              <div className="p-6 flex-1 space-y-6">
-
-                {/* 1. FREELANCEROS SIMULATION */}
-                {activeProject.id === 'freelanceros' && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="f_os_sim_container">
-                    
-                    {/* Left Column - Kanban Stages (7 cols) */}
-                    <div className="md:col-span-7 bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-display font-medium text-xs text-white uppercase tracking-wider">Dynamic Lead Kanban Board</span>
-                        <span className="text-[10px] font-mono text-gray-500">Tap card to shift processing stage</span>
-                      </div>
-
-                      {/* Kanban Columns */}
-                      <div className="grid grid-cols-2 gap-3">
-                        {['todo', 'progress', 'review', 'done'].map((stage) => {
-                          const stageColors = {
-                            todo: 'border-indigo-950/60 text-indigo-300 bg-indigo-950/20',
-                            progress: 'border-yellow-950/60 text-yellow-300 bg-yellow-950/20',
-                            review: 'border-purple-950/60 text-purple-300 bg-purple-950/20',
-                            done: 'border-emerald-950/60 text-emerald-300 bg-emerald-950/20',
-                          };
-                          const colTasks = tasks.filter(t => t.stage === stage);
-                          return (
-                            <div key={stage} className="bg-[#0b0a1f] p-3 rounded-xl border border-indigo-950/80 space-y-2">
-                              <span className={`text-[10px] font-mono px-2 py-0.5 rounded border capitalize ${stageColors[stage]}`}>
-                                {stage} ({colTasks.length})
-                              </span>
-                              <div className="space-y-1.5">
-                                {colTasks.map((t) => (
-                                  <div
-                                    key={t.id}
-                                    onClick={() => handleToggleTaskStage(t.id)}
-                                    className="bg-indigo-950/40 hover:bg-indigo-950/80 p-2 rounded-lg border border-indigo-900/30 cursor-pointer transition-colors"
-                                  >
-                                    <p className="text-[11px] font-sans text-gray-200 leading-tight">{t.title}</p>
-                                    <span className="text-[9px] font-mono text-[#F59E0B] capitalize mt-1 block">Priority: {t.priority}</span>
-                                  </div>
-                                ))}
-                                {colTasks.length === 0 && (
-                                  <span className="text-[10px] font-mono text-gray-600 block text-center py-4">Column empty</span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Add Custom task */}
-                      <div className="pt-2 flex space-x-2">
-                        <input
-                          type="text"
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          placeholder="Create custom task title..."
-                          className="flex-1 bg-[#09081a] border border-indigo-950 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-purple-600 placeholder-gray-500 font-sans"
-                        />
-                        <button
-                          onClick={handleAddTask}
-                          className="bg-[#7C3AED] hover:bg-[#6D28D9] px-3 py-1.5 rounded-xl text-xs text-white font-medium flex items-center space-x-1"
-                        >
-                          <Plus className="w-4 h-4" />
-                          <span>Add</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Right Column - Billing Tracker (5 cols) */}
-                    <div className="md:col-span-5 space-y-4">
-                      {/* Interactive Invoice panel */}
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4">
-                        <span className="font-display font-medium text-xs text-white uppercase tracking-wider block">Real-Time Invoicing Vault</span>
-                        
-                        {/* Financial Indicators */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <div className="bg-[#0b0a1f] rounded-xl p-2.5 border border-indigo-950">
-                            <span className="text-[9px] font-mono text-gray-500 uppercase">Paid Invoices</span>
-                            <span className="text-xs font-mono font-bold text-emerald-400 block mt-1">
-                              ${invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="bg-[#0b0a1f] rounded-xl p-2.5 border border-indigo-950">
-                            <span className="text-[9px] font-mono text-gray-500 uppercase">Outstanding Balance</span>
-                            <span className="text-xs font-mono font-bold text-amber-400 block mt-1">
-                              ${invoices.filter(i => i.status !== 'paid').reduce((sum, i) => sum + i.amount, 0).toLocaleString()}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Invoice Entry Form */}
-                        <div className="space-y-2 p-2.5 bg-[#0b0a1f] rounded-xl border border-indigo-950">
-                          <span className="text-[10px] font-mono text-gray-400 block uppercase">Draft New Invoice</span>
-                          <div className="grid grid-cols-2 gap-2">
-                            <input
-                              type="text"
-                              value={invClient}
-                              onChange={(e) => setInvClient(e.target.value)}
-                              placeholder="Client name"
-                              className="bg-[#09081a] border border-indigo-950 rounded-lg p-1.5 text-[11px] text-white focus:outline-none"
-                            />
-                            <input
-                              type="number"
-                              value={invAmount}
-                              onChange={(e) => setInvAmount(e.target.value)}
-                              placeholder="Amount ($)"
-                              className="bg-[#09081a] border border-indigo-950 rounded-lg p-1.5 text-[11px] text-white focus:outline-none"
-                            />
-                          </div>
-                          <button
-                            onClick={handleAddInvoice}
-                            className="w-full py-1.5 bg-indigo-950 hover:bg-amber-400 hover:text-black rounded-lg text-[10px] font-bold tracking-widest text-[#F59E0B] uppercase transition-colors"
-                          >
-                            DISPATCH INVOICE RECORD
-                          </button>
-                        </div>
-
-                        {/* Invoice Listings */}
-                        <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-                          {invoices.map((inv) => (
-                            <div key={inv.id} className="flex items-center justify-between p-2 rounded bg-indigo-950/20 text-xs border border-indigo-950">
-                              <div>
-                                <span className="font-sans font-medium text-gray-200 block leading-tight">{inv.client}</span>
-                                <span className="text-[9px] font-mono text-gray-500">Due: {inv.dueDate}</span>
-                              </div>
-                              <div className="text-right">
-                                <span className="font-mono text-white block font-bold">${inv.amount}</span>
-                                <span className={`text-[9px] font-mono px-1.5 rounded uppercase ${
-                                  inv.status === 'paid' ? 'bg-emerald-950 text-emerald-400' : inv.status === 'pending' ? 'bg-amber-950 text-amber-400' : 'bg-red-950 text-red-400'
-                                }`}>
-                                  {inv.status}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 2. COLLEGE ERP SIMULATION */}
-                {activeProject.id === 'collegeerp' && (
-                  <div className="space-y-6" id="erp_sim_container">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Dynamic Dashboard Parameter Toggle */}
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4">
-                        <span className="font-display font-medium text-xs text-white uppercase block">Select Active HQ Campus</span>
-                        <div className="space-y-2">
-                          {['Central Campus', 'Engineering Quad', 'Medical Center Wing'].map((camp) => (
-                            <button
-                              key={camp}
-                              onClick={() => setSelectedCampus(camp)}
-                              className={`w-full text-left p-2 rounded-xl border text-xs font-medium transition-all ${
-                                selectedCampus === camp
-                                  ? 'bg-purple-950/40 border-purple-500 text-amber-400'
-                                  : 'bg-[#0b0a1f] border-indigo-950 text-gray-400 hover:text-white'
-                              }`}
-                            >
-                              {camp}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Telemetry readouts */}
-                        <div className="pt-2 space-y-2 text-xs">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Total Enrolled Scholars:</span>
-                            <span className="font-mono font-bold text-purple-400">
-                              {selectedCampus === 'Central Campus' ? '12,480' : selectedCampus === 'Engineering Quad' ? '8,120' : '4,400'}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Security Access Level:</span>
-                            <span className="font-mono font-bold text-emerald-400">Encrypted</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Grades Simulation (Academic planning) */}
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-3">
-                        <span className="font-display font-medium text-xs text-white uppercase block">Custom GPA Predictor Block</span>
-                        <div className="space-y-2 text-xs">
-                          {Object.keys(gradeInput).map((subj) => (
-                            <div key={subj} className="space-y-1">
-                              <div className="flex justify-between text-[11px]">
-                                <span className="capitalize text-gray-300 font-sans">{subj === 'db' ? 'Database Architecture' : subj === 'ai' ? 'Advanced ML Models' : subj} Marks</span>
-                                <span className="font-mono text-white font-semibold">{gradeInput[subj]}/100</span>
-                              </div>
-                              <input
-                                type="range"
-                                min="40"
-                                max="100"
-                                value={gradeInput[subj]}
-                                onChange={(e) => setGradeInput({ ...gradeInput, [subj]: parseInt(e.target.value) })}
-                                className="w-full accent-amber-400"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Results readout */}
-                      <div className="bg-gradient-to-br from-indigo-950/40 to-purple-950/40 border border-indigo-900 rounded-2xl p-5 flex flex-col justify-between">
-                        <div className="space-y-2">
-                          <span className="font-display font-semibold text-xs text-amber-400 uppercase tracking-wider block">Calculated Academic Index</span>
-                          <p className="text-[11px] text-gray-400 leading-relaxed font-sans">
-                            Adjust Grade sliders to instantly calculate dynamic semester grading telemetry simulated real-time.
-                          </p>
-                        </div>
-                        <div className="py-2.5">
-                          <div className="bg-[#050411] rounded-xl p-3 border border-indigo-950 flex justify-between items-center">
-                            <div>
-                              <span className="text-[9px] font-mono text-gray-500 uppercase block">Projected GPA</span>
-                              <span className="text-xl font-mono font-bold text-emerald-400 block mt-1">{erpGPA().gpa} / 4.0</span>
-                            </div>
-                            <div className="text-right">
-                              <span className="text-[9px] font-mono text-gray-500 uppercase block">Percentage</span>
-                              <span className="text-md font-mono text-white block mt-1">{erpGPA().avg}%</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 3. RESTAURANT ANALYTICS SIMULATION */}
-                {activeProject.id === 'restaurant-analytics' && (
-                  <div className="space-y-6" id="rest_sim_container">
-                    
-                    {/* Live Header indicators */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 flex items-center justify-between">
-                        <div>
-                          <span className="text-[9px] font-mono text-gray-500 uppercase">Interactive Floor Seating</span>
-                          <span className="text-lg font-mono font-bold text-amber-400 block mt-0.5">{restaurantLiveStats().activeTables} / 6 Tables</span>
-                        </div>
-                        <Utensils className="w-8 h-8 text-indigo-950" />
-                      </div>
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 flex items-center justify-between">
-                        <div>
-                          <span className="text-[9px] font-mono text-gray-500 uppercase">Average Floor Occupancy</span>
-                          <span className="text-lg font-mono font-bold text-white block mt-0.5">{restaurantLiveStats().occupancyRate}% Occupied</span>
-                        </div>
-                        <Users className="w-8 h-8 text-indigo-950" />
-                      </div>
-                      <div className="bg-[#050411] border border-indigo-950 rounded-2xl p-4 flex items-center justify-between">
-                        <div>
-                          <span className="text-[9px] font-mono text-gray-500 uppercase">Live Vault Receipts</span>
-                          <span className="text-lg font-mono font-bold text-emerald-400 block mt-0.5">${restaurantLiveStats().activeEarnings} net bill</span>
-                        </div>
-                        <DollarSign className="w-8 h-8 text-indigo-950" />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                      
-                      {/* Tables Visual Grid Layout (8 cols) */}
-                      <div className="md:col-span-8 bg-[#050411] border border-[#1e1b4b] rounded-2xl p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="font-display font-medium text-xs text-white uppercase tracking-wider">Tap tables to swap Reservation pipeline statuses</span>
-                          <span className="text-[10px] font-mono text-amber-400 flex items-center space-x-1.5">
-                            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                            <span>Live simulation syncing</span>
-                          </span>
-                        </div>
-
-                        {/* Floor layout */}
-                        <div className="grid grid-cols-3 gap-3">
-                          {restTables.map((table) => {
-                            const statusColor = {
-                              vacant: 'bg-[#09081a] border-indigo-950 text-gray-500 hover:border-indigo-900',
-                              occupied: 'bg-[#1e1b4b]/30 border-indigo-600/60 text-white hover:border-indigo-500',
-                              ordered: 'bg-yellow-950/20 border-yellow-800 text-[#F59E0B] hover:border-yellow-600',
-                              billing: 'bg-emerald-950/20 border-emerald-800 text-emerald-400 hover:border-emerald-600',
-                            };
-                            return (
-                              <div
-                                key={table.id}
-                                onClick={() => handleTableStatusShift(table.id)}
-                                className={`rounded-xl p-4 border text-center transition-all cursor-pointer select-none space-y-2 ${statusColor[table.status]}`}
-                              >
-                                <span className="font-mono text-xs font-bold block block">T-{table.id} ({table.capacity}p)</span>
-                                <span className="text-[9px] font-mono tracking-widest uppercase block bg-black/40 py-0.5 px-1.5 rounded">{table.status}</span>
-                                <span className="text-[11px] font-mono block text-right font-medium">
-                                  {table.currentBill > 0 ? `$${table.currentBill}` : '$0'}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Chart Render */}
-                        <div className="p-3 bg-[#0d0c26]/60 rounded-xl border border-indigo-950/50">
-                          <span className="text-[10px] font-mono text-gray-400 block mb-3 uppercase tracking-wider">Hourly Revenue Yield</span>
-                          <div className="h-28">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={MOCK_RESTAURANT_CHART}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#12102e" />
-                                <XAxis dataKey="hour" stroke="#4b5563" fontSize={9} />
-                                <Tooltip contentStyle={{ backgroundColor: '#070615', border: '1px solid #312e81', fontSize: '10px' }} />
-                                <Line type="monotone" dataKey="sales" stroke="#F59E0B" strokeWidth={2} dot={{ r: 3 }} />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Dynamic Ticket Queues (4 cols) */}
-                      <div className="md:col-span-4 bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
-                        <div className="space-y-4">
-                          <span className="font-display font-medium text-xs text-white uppercase block">Active POS Ticket Feed</span>
-                          
-                          {/* Live adding ticket form */}
-                          <div className="space-y-2 bg-[#09081a] p-2.5 rounded-xl border border-indigo-950">
-                            <input
-                              type="text"
-                              value={newOrderName}
-                              onChange={(e) => setNewOrderName(e.target.value)}
-                              placeholder="Faux menu item name..."
-                              className="w-full bg-[#050411] border border-indigo-950 rounded-lg p-1 text-[11px] text-white focus:outline-none"
-                            />
-                            <input
-                              type="number"
-                              value={newOrderPrice}
-                              onChange={(e) => setNewOrderPrice(e.target.value)}
-                              placeholder="Price ($)"
-                              className="w-full bg-[#050411] border border-indigo-950 rounded-lg p-1 text-[11px] text-white focus:outline-none"
-                            />
-                            <button
-                              onClick={handleAddRestOrder}
-                              className="w-full py-1 bg-amber-400 text-black text-[9px] font-extrabold rounded-lg hover:opacity-90 tracking-widest uppercase transition-opacity"
-                            >
-                              QUEUE DIGITAL ORDER TICKET
-                            </button>
-                          </div>
-
-                          {/* Orders Feed */}
-                          <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-                            {restOrders.map((ord) => (
-                              <div key={ord.id} className="flex justify-between items-center p-2 rounded bg-indigo-950/20 border border-indigo-950 text-xs">
-                                <div>
-                                  <span className="font-sans text-gray-200 block font-medium leading-tight">{ord.item}</span>
-                                  <span className="text-[9px] font-mono text-gray-500">Ref: {ord.id} • Posted {ord.time}</span>
-                                </div>
-                                <div className="text-right">
-                                  <span className="font-mono text-amber-400 font-bold block">${ord.amount}</span>
-                                  <span className="bg-purple-950 text-purple-400 text-[8px] font-mono tracking-wider uppercase px-1 rounded">
-                                    {ord.status}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className="bg-indigo-950/20 border border-indigo-900/40 rounded-xl p-3">
-                          <span className="text-[9px] font-mono text-gray-400 block leading-relaxed">
-                            This real-time telemetry model shows our studio capacity to handle complex event-driven structures and fluid database state synchronization.
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 4. ICE CREAM SHOP SIMULATION */}
-                {activeProject.id === 'icecream-shop' && (
-                  <div className="space-y-6" id="icecream_sim_container">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                      
-                      {/* Left Column - Flavor popularity bar chart (6 cols) */}
-                      <div className="md:col-span-6 bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4">
-                        <span className="font-display font-medium text-xs text-white uppercase block">Flavor Popularity Sales Log</span>
-                        <div className="h-56">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={flavors}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="#12102e" />
-                              <XAxis dataKey="name" stroke="#4b5563" fontSize={8} interval={0} strokeWidth={1} />
-                              <YAxis stroke="#4b5563" fontSize={9} />
-                              <Tooltip contentStyle={{ backgroundColor: '#070615', border: '1px solid #312e81', fontSize: '10px' }} />
-                              <Bar dataKey="sales" fill="#7C3AED" radius={[4, 4, 0, 0]} />
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <p className="text-[10px] text-gray-400 leading-relaxed font-sans mt-2">
-                          Analytics track cumulative single-bucket sales. Stock metrics are updated in real time by administrative threshold loops below.
-                        </p>
-                      </div>
-
-                      {/* Right Column - Stock Manager & Safe Locks (6 cols) */}
-                      <div className="md:col-span-6 bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4">
-                        <span className="font-display font-medium text-xs text-white uppercase block">Interactive Flavor Storage Stock Controller</span>
-                        <p className="text-[10px] text-gray-400 leading-tight">Drag stock thresholds below 30% to trigger raw visual emergency log alarms.</p>
-
-                        <div className="space-y-4">
-                          {flavors.map((fl) => (
-                            <div key={fl.id} className="p-3 bg-[#0d0c26]/60 rounded-xl border border-indigo-950/50 space-y-2">
-                              <div className="flex justify-between items-center text-xs">
-                                <span className="font-sans font-medium text-white flex items-center space-x-2">
-                                  <span className="w-3 h-3 rounded-full shrink-0 border" style={{ backgroundColor: fl.color, borderColor: '#ffff' }} />
-                                  <span>{fl.name}</span>
-                                </span>
-                                <span className={`font-mono text-[9px] font-bold px-2 py-0.5 rounded uppercase ${
-                                  fl.stock <= 30 ? 'bg-red-950 text-red-400 animate-pulse border border-red-900' : 'bg-indigo-950 text-indigo-400'
-                                }`}>
-                                  {fl.stock <= 30 ? 'INSUFFICIENT STOCK WARNING' : `${fl.stock}% in tub`}
-                                </span>
-                              </div>
-
-                              <div className="flex items-center space-x-3">
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="100"
-                                  value={fl.stock}
-                                  onChange={(e) => handleAdjustStock(fl.id, parseInt(e.target.value))}
-                                  className="flex-1 accent-amber-500 cursor-pointer"
-                                />
-                                {fl.stock <= 30 && (
-                                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* 5. AI NOTES HUB SIMULATION */}
-                {activeProject.id === 'ai-notes' && (
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6" id="ai_sim_container">
-                    
-                    {/* Left Column - Real Document Canvas (6 cols) */}
-                    <div className="md:col-span-6 bg-[#050411] border border-indigo-950 rounded-2xl p-4 space-y-4 flex flex-col justify-between">
-                      <div className="space-y-2">
-                        <span className="font-display font-medium text-xs text-white uppercase block">Cognitive PlainText Pad</span>
-                        <p className="text-[10px] text-gray-500">Edit raw meeting telemetry documents below, then dispatch smart intelligence routines.</p>
-                      </div>
-
-                      <div className="flex-1 min-h-[220px]">
-                        <textarea
-                          value={noteContent}
-                          onChange={(e) => setNoteContent(e.target.value)}
-                          className="w-full h-full bg-[#09081a] border border-indigo-950 rounded-xl p-3 text-xs text-gray-300 font-sans focus:outline-none focus:border-purple-600 leading-relaxed shrink-0"
-                          placeholder="Write context documentation here..."
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          onClick={() => handleTriggerFauxAI('summarize')}
-                          className="py-2 bg-indigo-950 hover:bg-purple-900 border border-indigo-900 hover:border-purple-600 rounded-xl text-[10px] font-semibold text-white transition-all flex flex-col items-center justify-center space-y-1"
-                        >
-                          <FileText className="w-3.5 h-3.5 text-purple-400" />
-                          <span>Summarize</span>
-                        </button>
-                        <button
-                          onClick={() => handleTriggerFauxAI('polish')}
-                          className="py-2 bg-indigo-950 hover:bg-purple-900 border border-indigo-900 hover:border-purple-600 rounded-xl text-[10px] font-semibold text-white transition-all flex flex-col items-center justify-center space-y-1"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Corporate Polish</span>
-                        </button>
-                        <button
-                          onClick={() => handleTriggerFauxAI('actions')}
-                          className="py-2 bg-indigo-950 hover:bg-purple-900 border border-indigo-900 hover:border-purple-600 rounded-xl text-[10px] font-semibold text-white transition-all flex flex-col items-center justify-center space-y-1"
-                        >
-                          <Brain className="w-3.5 h-3.5 text-blue-400" />
-                          <span>Extract Tasks</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Right Column - Faux Generative Agent Results (6 cols) */}
-                    <div className="md:col-span-6 bg-[#050411] border border-indigo-950 rounded-2xl p-4 flex flex-col justify-between">
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span className="font-display font-medium text-xs text-white uppercase flex items-center space-x-1.5">
-                            <Brain className="w-4 h-4 text-[#7C3AED]" />
-                            <span>Structured Context Resolver Outcomes</span>
-                          </span>
-                          <span className="bg-[#12102e] border border-indigo-900 text-purple-400 text-[8px] font-mono uppercase px-2 py-0.5 rounded">
-                            Model: Gemini-3.5-pro
-                          </span>
-                        </div>
-
-                        {/* Faux parsing display */}
-                        {isAiProcessing && (
-                          <div className="p-12 text-center space-y-4">
-                            <RefreshCw className="w-8 h-8 text-amber-400 animate-spin mx-auto" />
-                            <div>
-                              <p className="text-xs font-mono text-gray-300">Resolving vector pipeline nodes...</p>
-                              <p className="text-[9px] font-mono text-purple-500 mt-1">Executing: parse_text_{aiAnalysisType}()</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {!isAiProcessing && !aiOutcome && (
-                          <div className="p-12 text-center text-xs text-gray-500 border border-dashed border-indigo-950 rounded-xl py-20 flex flex-col items-center justify-center space-y-2">
-                            <Brain className="w-8 h-8 text-indigo-950" />
-                            <span>Select a model function routine on the left sidebar context pad to view resolved outcomes immediately.</span>
-                          </div>
-                        )}
-
-                        {!isAiProcessing && aiOutcome && (
-                          <div className="bg-[#0b0a1f] border border-indigo-950/80 rounded-xl p-4 max-h-[300px] overflow-y-auto whitespace-pre-line text-xs leading-relaxed text-gray-300 font-sans shadow-lg">
-                            {aiOutcome}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="bg-[#0d0c26] border border-indigo-950 rounded-xl p-3 mt-4">
-                        <span className="text-[9px] font-mono text-gray-400 block leading-normal">
-                          Mohana Labs integrates real, context-grounded AI tools powered by the official <strong>@google/genai TypeScript SDK</strong> during client releases.
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="p-6 bg-indigo-950/20 border-t border-indigo-950 flex items-center justify-between">
-                <span className="text-[10px] font-mono text-gray-500 font-light">SYSTEM SECURE • INTEGRATED LOCAL STORAGE LIFECYCLES</span>
-                <button
-                  onClick={() => setActiveProject(null)}
-                  className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  Terminate Sandbox Sandbox
-                </button>
-              </div>
             </div>
+
           </div>
-        )}
-      </div>
-    </section>
+
+        </div>
+      </section>
+    </div>
   );
 }

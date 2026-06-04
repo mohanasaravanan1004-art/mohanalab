@@ -108,7 +108,13 @@ export default function Labs() {
   // -------------------------------------------------------------
   // VIEW & COHERENCE CONTROL STATES
   // -------------------------------------------------------------
-  const [viewMode, setViewMode] = useState<'modules' | 'login' | 'welcome' | 'workspace'>('modules');
+  const [viewMode, setViewMode] = useState<'modules' | 'login' | 'welcome' | 'workspace'>(() => {
+    const saved = localStorage.getItem('labs_remembered_user');
+    if (saved) {
+      return 'workspace';
+    }
+    return 'login';
+  });
   const [selectedExperimentTab, setSelectedExperimentTab] = useState<'neural' | 'shader' | 'terminal'>('neural');
   
   // Login input states
@@ -572,7 +578,7 @@ export default function Labs() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('labs_remembered_user');
-    setViewMode('modules');
+    setViewMode('login');
     setLoginId('');
     setLoginPass('');
   };
@@ -676,12 +682,13 @@ export default function Labs() {
           {currentUser && (
             <button
               onClick={() => {
-                setViewMode('modules');
+                setViewMode('workspace');
+                setWorkspaceTab('dashboard');
               }}
               className="flex items-center space-x-1.5 px-3 py-2 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 rounded-xl text-xs font-mono transition-all cursor-pointer"
             >
               <Undo2 className="w-3.5 h-3.5 text-amber-400" />
-              <span>Lab Modules</span>
+              <span>Dashboard Hub</span>
             </button>
           )}
 
@@ -995,15 +1002,6 @@ export default function Labs() {
                         <span>Execute Ingress Handshake</span>
                       </>
                     )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setViewMode('modules')}
-                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-mono text-[10px] uppercase font-bold tracking-widest rounded-xl transition-all cursor-pointer flex items-center justify-center space-x-1 border border-white/5"
-                  >
-                    <Undo2 className="w-3.5 h-3.5" />
-                    <span>Return to Labs Selection</span>
                   </button>
                 </div>
               </form>

@@ -46,56 +46,56 @@ export default function App() {
             {/* Quick Services Preview Block */}
             <Services setActivePage={setActivePage} setSelectedServiceId={setSelectedServiceId} />
 
-            {/* Quick Portfolio Highlights section linking to Live sandbox */}
+            {/* Quick 30-Day Web Dev Syllabus Tracker preview block */}
             <div className="bg-[#050410] py-20 px-4 md:px-8 border-y border-indigo-950/80">
               <div className="max-w-7xl mx-auto space-y-12">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-indigo-950">
                   <div className="space-y-2">
-                    <span className="font-mono text-purple-400 text-[10px] tracking-widest block uppercase font-semibold">CRAFT AND DEMONSTRATION</span>
-                    <h3 className="font-display font-medium text-2xl text-white">Featured Interactive Sandboxes</h3>
-                    <p className="text-gray-400 text-xs">Test actual live POS controllers, grade calculations, stock alerts, and AI compilers inline.</p>
+                    <span className="font-mono text-purple-400 text-[10px] tracking-widest block uppercase font-semibold">CURRICULUM CENTER</span>
+                    <h3 className="font-display font-medium text-2xl text-white">30-Day Web Development masterclass</h3>
+                    <p className="text-gray-400 text-xs">A comprehensive curriculum containing daily tasks to master HTML tags, responsive CSS layouts, interactive JavaScript, server APIs, and cloud deployment.</p>
                   </div>
                   <button
                     onClick={() => setActivePage('projects')}
-                    className="group flex items-center space-x-1 text-xs font-mono text-amber-400 hover:text-white transition-colors"
+                    className="group flex items-center space-x-1 text-xs font-mono text-amber-400 hover:text-white transition-colors cursor-pointer"
                   >
-                    <span>Launch Dedicated Demo Suite</span>
+                    <span>Launch Roadmap Syllabus</span>
                     <ArrowRight className="w-4 h-4 text-[#7C3AED] group-hover:translate-x-1.5 transition-transform" />
                   </button>
                 </div>
 
                 {/* Grid layout shortcuts */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-indigo-900 transition-all">
+                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-[#a855f7]/40 transition-all">
                     <div className="space-y-3">
-                      <span className="bg-amber-950/40 border border-amber-900/40 text-[9px] font-mono text-amber-400 px-2 py-0.5 rounded uppercase">REST_POS_TELEMETRY</span>
-                      <h4 className="font-display text-md text-white font-semibold">Restaurant Analytics Panel</h4>
+                      <span className="bg-purple-950/40 border border-purple-900/40 text-[9px] font-mono text-purple-400 px-2 py-0.5 rounded uppercase">WEEK 1 &amp; 2</span>
+                      <h4 className="font-display text-md text-white font-semibold">HTML Structure &amp; Responsive CSS Frameworks</h4>
                       <p className="text-xs text-gray-400 leading-relaxed">
-                        Control reservation seating tables status to recalculate live occupancy and income telemetry, accompanied by custom visual graph models.
+                        Design state-of-the-art sticky headers, absolute box-model boundaries, multi-column CSS grids, responsive flexboxes, and interactive landing pages.
                       </p>
                     </div>
                     <button
                       onClick={() => setActivePage('projects')}
-                      className="mt-6 flex items-center space-x-1 text-xs text-purple-400 hover:text-white transition-colors text-left"
+                      className="mt-6 flex items-center space-x-1 text-xs text-amber-400 hover:text-white transition-colors text-left cursor-pointer"
                     >
-                      <span>Boot POS Simulation Router</span>
+                      <span>Open Level-1 Syllabus</span>
                       <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>
 
-                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-indigo-900 transition-all">
+                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-[#a855f7]/40 transition-all">
                     <div className="space-y-3">
-                      <span className="bg-purple-950/40 border border-purple-900/40 text-[9px] font-mono text-purple-300 px-2 py-0.5 rounded uppercase">COGNITIVE_AI_NOTES</span>
-                      <h4 className="font-display text-md text-white font-semibold">AI Notes Hub Workspace</h4>
+                      <span className="bg-amber-950/40 border border-amber-900/30 text-[9px] font-mono text-amber-300 px-2 py-0.5 rounded uppercase">WEEK 3 &amp; 4</span>
+                      <h4 className="font-display text-md text-white font-semibold">JavaScript Engine, JSON APIs &amp; Live Deployment</h4>
                       <p className="text-xs text-gray-400 leading-relaxed">
-                        Input actual diagnostic meeting summaries and query standard corporate polish or task lists using a simulated Gemini model parser wrapper.
+                        Learn variable memory states, listen to real-time mouse/DOM inputs, load external fetch API payloads, configure storage parameters, and deploy live.
                       </p>
                     </div>
                     <button
                       onClick={() => setActivePage('projects')}
-                      className="mt-6 flex items-center space-x-1 text-xs text-purple-400 hover:text-white transition-colors text-left"
+                      className="mt-6 flex items-center space-x-1 text-xs text-amber-400 hover:text-white transition-colors text-left cursor-pointer"
                     >
-                      <span>Boot Cognitive AI Prompt Hub</span>
+                      <span>Open Level-2 Syllabus</span>
                       <ChevronRight className="w-3 h-3" />
                     </button>
                   </div>

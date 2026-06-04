@@ -19,7 +19,7 @@ export default function Navbar({ activePage, setActivePage }: NavbarProps) {
     { id: 'home', label: 'Home' },
     { id: 'about', label: 'About' },
     { id: 'services', label: 'Services' },
-    { id: 'projects', label: 'Projects & Demos' },
+    { id: 'projects', label: '30-Day Roadmap' },
     { id: 'labs', label: 'Labs' },
     { id: 'technologies', label: 'Tech Stack' },
     { id: 'contact', label: 'Contact' },
