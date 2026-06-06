@@ -1,6 +1,6 @@
 {
-  "name": "Mohana Labs",
-  "description": "Mohana Labs is a futuristic digital product studio and SaaS engineering portfolio specializing in high-fidelity business dashboards, analytics systems, and intelligence portals.",
+  "name": "Vertex Online Compiler",
+  "description": "Vertex Online Compiler is a state-of-the-art multi-language learning platform. It offers premium code editing (HTML, CSS, JS, Python, C, C++, Java, PHP, SQL), standard stdin streams, AI-powered compilers copilot capabilities, assignments evaluation boards, and custom analytics dashboards.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

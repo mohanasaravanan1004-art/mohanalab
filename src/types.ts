@@ -3,109 +3,102 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type PageId = 'home' | 'about' | 'services' | 'projects' | 'labs' | 'technologies' | 'contact';
+export type PageId = 
+  | 'landing' 
+  | 'auth' 
+  | 'dashboard' 
+  | 'workspace' 
+  | 'blueprints' 
+  | 'admin' 
+  | 'ai-copilot' 
+  | 'settings';
 
-export interface ServiceItem {
-  id: string;
-  title: string;
-  description: string;
-  iconName: string; // Used to dynamic resolve lucide icon components
-  capabilities: string[];
+export type ProgrammingLanguage = 
+  | 'javascript' 
+  | 'typescript'
+  | 'python' 
+  | 'cpp' 
+  | 'c' 
+  | 'java' 
+  | 'html' 
+  | 'css' 
+  | 'php' 
+  | 'sql'
+  | 'go'
+  | 'rust'
+  | 'kotlin'
+  | 'swift'
+  | 'csharp'
+  | 'ruby';
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  rollNo?: string;
+  avatarSeed: string;
+  completedChallenges: number;
+  xpCoins: number;
+  grade: string;
+  enrolledDate: string;
+  role: 'student' | 'admin';
 }
 
-export interface ProjectItem {
+export interface WorkspaceFile {
+  name: string;
+  content: string;
+  language: ProgrammingLanguage;
+}
+
+export interface CompilerProject {
+  id: string;
+  title: string;
+  language: ProgrammingLanguage;
+  files: WorkspaceFile[];
+  activeFileName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CodingChallenge {
   id: string;
   title: string;
   category: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   description: string;
-  thumbnail: string; // Visual tag or vector theme
-  tech: string[];
-  metrics: { label: string; value: string };
-  isLiveSandbox: boolean;
+  language: ProgrammingLanguage;
+  startingCode: string;
+  testInput: string;
+  expectedOutput: string;
+  points: number;
+  isSolved: boolean;
+  assignedDate: string;
 }
 
-export interface LabExperiment {
+export interface SubmissionHistory {
   id: string;
-  title: string;
-  status: 'beta' | 'stable' | 'alpha';
-  description: string;
-  tech: string[];
-  version: string;
+  challengeTitle: string;
+  language: ProgrammingLanguage;
+  status: 'Accepted' | 'Wrong Answer' | 'Runtime Error' | 'Compilation Error';
+  executionTime: string;
+  memoryUsed: string;
+  score: number;
+  timestamp: string;
 }
 
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  company: string;
-  content: string;
-  avatarSeed: string;
-  rating: number;
-}
-
-export interface Technology {
-  name: string;
-  category: 'frontend' | 'backend' | 'cloud' | 'analytics' | 'ai';
-  level: string; // e.g. "expert", "production"
-  description: string;
-  iconColor: string;
-}
-
-// Sandbox state properties for FreelancerOS Dashboard Sim
-export interface FreelancerInvoice {
-  id: string;
-  client: string;
-  amount: number;
-  status: 'paid' | 'pending' | 'overdue';
-  dueDate: string;
-}
-
-export interface FreelancerTask {
-  id: string;
-  title: string;
-  priority: 'low' | 'medium' | 'high';
-  stage: 'todo' | 'progress' | 'review' | 'done';
-}
-
-// Sandbox state properties for Restaurant Dashboard Sim
-export interface RestaurantTable {
-  id: number;
-  status: 'vacant' | 'occupied' | 'ordered' | 'billing';
-  capacity: number;
-  currentBill: number;
-  waiter: string;
-}
-
-export interface RestaurantOrder {
-  id: string;
-  time: string;
-  item: string;
-  amount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'served';
-}
-
-// Sandbox state properties for Ice Cream Dashboard Sim
-export interface IceCreamFlavor {
+export interface ManagedStudent {
   id: string;
   name: string;
-  sales: number;
-  stock: number; // percentage
-  status: 'critical' | 'normal' | 'overflow';
-  color: string;
+  email: string;
+  rollNo: string;
+  challengesSolved: number;
+  xp: number;
+  gpa: number;
+  status: 'active' | 'suspended';
 }
 
-// School ERP interactive properties
-export interface AcademicCalendarEvent {
-  id: string;
-  time: string;
-  title: string;
-  desc: string;
-  department: string;
-}
-
-export interface DepartmentMetric {
-  name: string;
-  staff: number;
-  students: number;
-  budget: string;
+export interface CompilerMetrics {
+  cpuLoad: number;
+  memoryUsage: string;
+  lastRunTime: string;
+  currentActiveThreads: number;
 }

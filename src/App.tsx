@@ -3,210 +3,624 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
-import { PageId } from './types';
+import React, { useState, useEffect } from 'react';
+import { PageId, UserProfile, CompilerProject, WorkspaceFile, ProgrammingLanguage, ManagedStudent } from './types';
 import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Hero from './components/Hero';
-import About from './components/About';
-import Services from './components/Services';
-import Projects from './components/Projects';
-import Labs from './components/Labs';
-import Technologies from './components/Technologies';
-import Contact from './components/Contact';
-import Testimonials from './components/Testimonials';
-import { ArrowRight, Sparkles, Code, Play, Send, Zap, ChevronRight } from 'lucide-react';
+import LandingView from './components/LandingView';
+import AuthView from './components/AuthView';
+import DashboardView from './components/DashboardView';
+import WorkspaceView from './components/WorkspaceView';
+import BlueprintsView from './components/BlueprintsView';
+import AdminView from './components/AdminView';
+import AiCopilotView from './components/AiCopilotView';
+import SettingsView from './components/SettingsView';
+
+// Core preloaded template codes
+const INITIAL_HTML = `<!-- Dynamic Client Sandbox Playground -->
+<div class="welcome-box">
+  <h2 class="welcome-title">🚀 Vertex Web Compiler Workspace</h2>
+  <p class="welcome-desc">Modify HTML codes on index.html, alter styles.css classes, trigger events inside main.js, and monitor output compilations here!</p>
+  
+  <div class="academic-stats">
+    <span class="status-indicator">● Active Sandbox Instance</span>
+    <span class="version-badge">Version 1.2</span>
+  </div>
+  
+  <button id="event_test_btn" class="action-btn">Trigger Click Listener</button>
+  <p id="event_msg" class="event-message">Clicks recorded: 0</p>
+</div>`;
+
+const INITIAL_CSS = `/* Custom Compiler Swatch stylesheet */
+body {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: radial-gradient(circle, #0e0524 0%, #03010b 100%);
+  font-family: system-ui, sans-serif;
+  color: #fff;
+  padding: 1rem;
+}
+
+.welcome-box {
+  background: #08051e;
+  padding: 2.5rem;
+  border-radius: 2rem;
+  box-shadow: 0 15px 35px rgba(124, 58, 237, 0.25);
+  max-w-md;
+  text-align: center;
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.welcome-title {
+  color: #c084fc;
+  margin: 0 0 0.8rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.welcome-desc {
+  font-size: 0.85rem;
+  color: #a1a1aa;
+  line-height: 1.6;
+}
+
+.academic-stats {
+  display: flex;
+  justify-content: space-around;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #ec4899;
+  margin: 1.5rem 0;
+}
+
+.status-indicator {
+  color: #34d399;
+}
+
+.action-btn {
+  background-color: #7c3aed;
+  color: #ffffff;
+  border: none;
+  padding: 0.8rem 1.6rem;
+  border-radius: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.action-btn:hover {
+  background-color: #6d28d9;
+  transform: scale(1.02);
+}
+
+.event-message {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #c084fc;
+  margin-top: 1rem;
+}`;
+
+const INITIAL_JS = `// Register in-line DOM interactive callbacks below
+(function() {
+  const button = document.getElementById('event_test_btn');
+  const text = document.getElementById('event_msg');
+  let counter = 0;
+
+  if (button && text) {
+    button.onclick = function() {
+      counter += 1;
+      text.innerText = "Clicks recorded: " + counter;
+      console.log("Success: Trigger click event called! Click index sum is " + counter);
+    };
+  } else {
+    console.warn("Element references during initialization returned empty properties.");
+  }
+})();`;
 
 export default function App() {
-  const [activePage, setActivePage] = useState<PageId>('home');
-  const [selectedServiceId, setSelectedServiceId] = useState<string>('dashboards');
+  
+  // Default logged-in student configuration so students see functional dashboards instantly
+  const [user, setUser] = useState<UserProfile | null>({
+    name: "Alex Mercer",
+    email: "student@vertex.edu",
+    rollNo: "VTX-2026-9481",
+    avatarSeed: "alex",
+    completedChallenges: 3,
+    xpCoins: 450,
+    grade: "A+ (3.92)",
+    enrolledDate: "Sept 12, 2024",
+    role: "student"
+  });
 
-  // Smooth scroll reset when toggling route views
+  // Pages routing ID. If logged-in, standard starts with dashboard; otherwise landing page.
+  const [activePage, setActivePage] = useState<PageId>(user ? 'dashboard' : 'landing');
+
+  // Multi-Language Projects cache repository
+  const [projects, setProjects] = useState<CompilerProject[]>([
+    {
+      id: "proj_web_001",
+      title: "My Creative Web Project",
+      language: "html",
+      activeFileName: "index.html",
+      createdAt: "06/05/2026",
+      updatedAt: "06/06/2026",
+      files: [
+        { name: "index.html", content: INITIAL_HTML, language: "html" },
+        { name: "styles.css", content: INITIAL_CSS, language: "css" },
+        { name: "main.js", content: INITIAL_JS, language: "javascript" }
+      ]
+    },
+    {
+      id: "proj_py_bfs",
+      title: "Python Solver Framework",
+      language: "python",
+      activeFileName: "main.py",
+      createdAt: "06/06/2026",
+      updatedAt: "06/06/2026",
+      files: [
+        { 
+          name: "main.py", 
+          language: "python",
+          content: `# Multi-Language Virtual Sandbox\ndef greet_student(name):\n    print(f"👋 Greetings, {name}! Virtual python compile online.")\n\nstudent = input("Enter standard name: ") or "Alex Mercer"\ngreet_student(student)\n`
+        }
+      ]
+    },
+    {
+      id: "proj_sql_select",
+      title: "SQLite Database Ledger",
+      language: "sql",
+      activeFileName: "query.sql",
+      createdAt: "06/06/2026",
+      updatedAt: "06/06/2026",
+      files: [
+        { 
+          name: "query.sql", 
+          language: "sql",
+          content: `-- SQLite dynamic relational query\nSELECT id, name, enrolledDate, grade \nFROM students \nWHERE grade LIKE 'A%'\nORDER BY id ASC;\n`
+        }
+      ]
+    }
+  ]);
+
+  const [activeProjectId, setActiveProjectId] = useState<string>("proj_web_001");
+
+  // Admin roster students lists
+  const [students, setStudents] = useState<ManagedStudent[]>([
+    { id: "VTX-001", name: "Alex Mercer", email: "student@vertex.edu", rollNo: "VTX-2026-9481", challengesSolved: 4, xp: 450, gpa: 3.92, status: "active" },
+    { id: "VTX-002", name: "Charlie Finch", email: "charlie@vertex.edu", rollNo: "VTX-2026-1184", challengesSolved: 3, xp: 320, gpa: 3.52, status: "active" },
+    { id: "VTX-003", name: "Jaden Brooks", email: "jaden@vertex.edu", rollNo: "VTX-2026-0045", challengesSolved: 5, xp: 580, gpa: 4.00, status: "active" }
+  ]);
+
+  // Legacy variables synced for standard HTML Preview frame
+  const [htmlCode, setHtmlCode] = useState<string>(INITIAL_HTML);
+  const [cssCode, setCssCode] = useState<string>(INITIAL_CSS);
+  const [jsCode, setJsCode] = useState<string>(INITIAL_JS);
+
+  const [useTailwind, setUseTailwind] = useState<boolean>(true);
+  const [logs, setLogs] = useState<any[]>([]);
+  const [viewportMode, setViewportMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [fontPreference, setFontPreference] = useState<'mono' | 'sans' | 'display'>('mono');
+  const [lastCompiledAt, setLastCompiledAt] = useState<string | null>(null);
+
+  // Floating notifications feedback center
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const triggerToastNotification = (msg: string) => {
+    setToastMessage(msg);
+  };
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [activePage]);
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage(null);
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
-  // Global visual wrapper layout
-  return (
-    <div className="min-h-screen bg-[#070615] text-[#f3f4f6]" id="app_root_layout">
-      {/* Background stars glowing indicators */}
-      <div className="absolute top-0 left-0 right-0 h-[600px] bg-gradient-to-b from-indigo-950/15 via-transparent to-transparent pointer-events-none" />
-
-      {/* Global Header */}
-      <Navbar activePage={activePage} setActivePage={setActivePage} />
-
-      {/* Primary Dynamic Main Framework View */}
-      <main className="relative z-10 pt-16">
+  // Intercept events transmitted from our compiler Preview Frame sandboxes
+  useEffect(() => {
+    const handleSandboxMessageEvent = (event: MessageEvent) => {
+      if (event.data && event.data.source === 'compiler_terminal_sandbox') {
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         
-        {/* HOMEPAGE AGGREGATION VIEW */}
-        {activePage === 'home' && (
-          <div className="space-y-12 animate-fade-in" id="home_view_wrapper">
-            <Hero setActivePage={setActivePage} />
+        let typeVal: 'log' | 'warn' | 'error' = 'log';
+        if (event.data.type === 'warn') typeVal = 'warn';
+        if (event.data.type === 'error') typeVal = 'error';
 
-            {/* Quick Services Preview Block */}
-            <Services setActivePage={setActivePage} setSelectedServiceId={setSelectedServiceId} />
+        setLogs(prev => [...prev, { 
+          type: typeVal, 
+          text: event.data.text, 
+          time: timestamp 
+        }]);
+      }
+    };
 
-            {/* Quick 30-Day Web Dev Syllabus Tracker preview block */}
-            <div className="bg-[#050410] py-20 px-4 md:px-8 border-y border-indigo-950/80">
-              <div className="max-w-7xl mx-auto space-y-12">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-indigo-950">
-                  <div className="space-y-2">
-                    <span className="font-mono text-purple-400 text-[10px] tracking-widest block uppercase font-semibold">CURRICULUM CENTER</span>
-                    <h3 className="font-display font-medium text-2xl text-white">30-Day Web Development masterclass</h3>
-                    <p className="text-gray-400 text-xs">A comprehensive curriculum containing daily tasks to master HTML tags, responsive CSS layouts, interactive JavaScript, server APIs, and cloud deployment.</p>
-                  </div>
-                  <button
-                    onClick={() => setActivePage('projects')}
-                    className="group flex items-center space-x-1 text-xs font-mono text-amber-400 hover:text-white transition-colors cursor-pointer"
-                  >
-                    <span>Launch Roadmap Syllabus</span>
-                    <ArrowRight className="w-4 h-4 text-[#7C3AED] group-hover:translate-x-1.5 transition-transform" />
-                  </button>
-                </div>
+    window.addEventListener('message', handleSandboxMessageEvent);
+    return () => window.removeEventListener('message', handleSandboxMessageEvent);
+  }, []);
 
-                {/* Grid layout shortcuts */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-[#a855f7]/40 transition-all">
-                    <div className="space-y-3">
-                      <span className="bg-purple-950/40 border border-purple-900/40 text-[9px] font-mono text-purple-400 px-2 py-0.5 rounded uppercase">WEEK 1 &amp; 2</span>
-                      <h4 className="font-display text-md text-white font-semibold">HTML Structure &amp; Responsive CSS Frameworks</h4>
-                      <p className="text-xs text-gray-400 leading-relaxed">
-                        Design state-of-the-art sticky headers, absolute box-model boundaries, multi-column CSS grids, responsive flexboxes, and interactive landing pages.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActivePage('projects')}
-                      className="mt-6 flex items-center space-x-1 text-xs text-amber-400 hover:text-white transition-colors text-left cursor-pointer"
-                    >
-                      <span>Open Level-1 Syllabus</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
+  // Standard static workspace template override resets
+  const handleClearWorkspace = () => {
+    setHtmlCode('<!-- Empty draft -->\n');
+    setCssCode('/* Empty stylesheet */\n');
+    setJsCode('// Empty script\n');
+    setLogs([]);
+    triggerToastNotification("Workspace cleared successfully!");
+  };
 
-                  <div className="p-6 bg-[#0b0a1f] border border-indigo-950 rounded-2xl flex flex-col justify-between hover:border-[#a855f7]/40 transition-all">
-                    <div className="space-y-3">
-                      <span className="bg-amber-950/40 border border-amber-900/30 text-[9px] font-mono text-amber-300 px-2 py-0.5 rounded uppercase">WEEK 3 &amp; 4</span>
-                      <h4 className="font-display text-md text-white font-semibold">JavaScript Engine, JSON APIs &amp; Live Deployment</h4>
-                      <p className="text-xs text-gray-400 leading-relaxed">
-                        Learn variable memory states, listen to real-time mouse/DOM inputs, load external fetch API payloads, configure storage parameters, and deploy live.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActivePage('projects')}
-                      className="mt-6 flex items-center space-x-1 text-xs text-amber-400 hover:text-white transition-colors text-left cursor-pointer"
-                    >
-                      <span>Open Level-2 Syllabus</span>
-                      <ChevronRight className="w-3 h-3" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+  // Compile runner for index.html, main.js, styles.css
+  const runCompilerCompilation = () => {
+    const iframe = document.getElementById('compiler_preview_iframe') as HTMLIFrameElement;
+    if (!iframe) return;
 
-            {/* Quick Labs Preview banner */}
-            <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
-              <div className="glass-panel border-indigo-950 bg-gradient-to-br from-indigo-950/20 via-transparent to-purple-950/20 p-8 rounded-3xl grid grid-cols-1 md:grid-cols-12 gap-8 items-center relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-80 h-80 rounded-full glow-spot-1 pointer-events-none" />
-                
-                <div className="md:col-span-8 space-y-4 relative z-10">
-                  <div className="inline-block bg-purple-950/40 border border-purple-900/30 px-3 py-1 rounded-full">
-                    <span className="font-mono text-[9px] tracking-widest text-[#7C3AED] font-semibold uppercase">THE R&amp;D LAB</span>
-                  </div>
-                  <h4 className="font-display font-medium text-xl sm:text-2xl text-white">
-                    Need neural routing flows, wave mathematics, or mock logs telemetry? Explore Labs.
-                  </h4>
-                  <p className="text-xs text-gray-400 max-w-xl leading-relaxed">
-                    We host real-time diagnostic stream engines, SVG parametric oscillators, and node flow configuration grids to benchmark performance.
-                  </p>
-                </div>
+    // Direct JS overrides inside preview container for mirroring prints at parent level
+    const loggerScript = `
+      <script>
+        (function() {
+          const origLog = console.log;
+          const origWarn = console.warn;
+          const origError = console.error;
 
-                <div className="md:col-span-4 text-left md:text-right relative z-10">
-                  <button
-                    onClick={() => setActivePage('labs')}
-                    className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-xs font-semibold tracking-wide hover:opacity-95 transition-opacity inline-flex items-center space-x-2"
-                  >
-                    <span>Inspect Laboratory Canvas</span>
-                    <Play className="w-3 w-3 fill-current text-amber-400" />
-                  </button>
-                </div>
-              </div>
-            </div>
+          console.log = function(...args) {
+            origLog.apply(console, args);
+            window.parent.postMessage({
+              source: 'compiler_terminal_sandbox',
+              type: 'log',
+              text: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+            }, '*');
+          };
 
-            {/* Client Testimonials */}
-            <Testimonials />
+          console.warn = function(...args) {
+            origWarn.apply(console, args);
+            window.parent.postMessage({
+              source: 'compiler_terminal_sandbox',
+              type: 'warn',
+              text: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+            }, '*');
+          };
 
-            {/* Dynamic Interactive Universal Call to Action */}
-            <div className="max-w-7xl mx-auto px-4 md:px-8 pb-10">
-              <div className="rounded-3xl p-8 bg-gradient-to-br from-[#1E1B4B] via-[#070615] to-[#120f32] text-center space-y-6 border border-indigo-900 shadow-xl relative overflow-hidden gold-glow">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.12),rgba(0,0,0,0))] pointer-events-none" />
-                
-                <div className="space-y-2 relative z-10 max-w-xl mx-auto">
-                  <span className="font-mono text-[9px] text-[#F59E0B] tracking-widest uppercase block font-bold">READY TO ARCHITECT?</span>
-                  <h3 className="font-display font-medium text-2xl sm:text-3xl text-white tracking-tight leading-snug">Let's craft your high-performance custom analytical solutions today.</h3>
-                  <p className="text-xs text-gray-400 leading-relaxed font-sans pt-1">
-                    Book an intake evaluation session with our elite modular design squad. Align budgets, timeline sliders, and capacity modules on our estimate portal.
-                  </p>
-                </div>
+          console.error = function(...args) {
+            origError.apply(console, args);
+            window.parent.postMessage({
+              source: 'compiler_terminal_sandbox',
+              type: 'error',
+              text: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+            }, '*');
+          };
 
-                <div className="pt-2 relative z-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    onClick={() => setActivePage('contact')}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-bold rounded-xl shadow-lg hover:shadow-purple-900/30 transition-all uppercase tracking-widest border border-purple-500/20"
-                  >
-                    Configure Estimate Questionnaire &amp; Launch
-                  </button>
-                </div>
-              </div>
-            </div>
+          window.addEventListener('error', function(e) {
+            window.parent.postMessage({
+              source: 'compiler_terminal_sandbox',
+              type: 'error',
+              text: 'Uncaught Exception: ' + e.message
+            }, '*');
+          });
+        })();
+      </script>
+    `;
+
+    const tailwindCdn = useTailwind 
+      ? '<script src="https://cdn.tailwindcss.com"></script><script>tailwind.config = { theme: { extend: {} } }</script>' 
+      : '';
+
+    const content = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          ${tailwindCdn}
+          ${loggerScript}
+          <style>${cssCode}</style>
+        </head>
+        <body>
+          ${htmlCode}
+          <script>
+            try {
+              ${jsCode}
+            } catch(e) {
+              console.error(e.message);
+            }
+          </script>
+        </body>
+      </html>
+    `;
+
+    iframe.srcdoc = content;
+    setLastCompiledAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    triggerToastNotification("Bundled sandbox HTML compiled in preview frame! 🟢");
+  };
+
+  // Create customized user defined code playground projects
+  const handleCreateNewProject = (title: string, language: string) => {
+    const defaultContents: Record<string, string> = {
+      python: `# Python 3 module\nprint("Hello World!")\n`,
+      cpp: `// C++ system\n#include <iostream>\nint main() {\n    std::cout << "Gnu compiler active" << std::endl;\n    return 0;\n}\n`,
+      c: `// C language standard\n#include <stdio.h>\nint main() {\n    printf("Compiled C Binary Loaded\\n");\n    return 0;\n}\n`,
+      java: `// JDK 21 Application\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("JVM Initialized");\n    }\n}\n`,
+      javascript: `// Node environment\nconsole.log("Interactive ES6 callback compiled successfully.");\n`,
+      php: `<?php\n// PHP CLI script\necho "Hello from hyper-text container\\n";\n`,
+      sql: `-- SQL statements\nCREATE TABLE students (id INT, name TEXT);\nINSERT INTO students VALUES (1, "Alex Mercer");\nSELECT * FROM students;\n`,
+      html: `<!-- Quick HTML templates -->\n<h2>Markup Draft</h2>\n`,
+      css: `/* layout stylesheet */\nbody { background: #000; }\n`
+    };
+
+    const ext: Record<string, string> = {
+      python: "main.py", cpp: "main.cpp", c: "main.c", java: "Main.java", 
+      javascript: "main.js", php: "index.php", sql: "query.sql", html: "index.html"
+    };
+
+    const fileExt = ext[language] || "index.js";
+    const starterStr = defaultContents[language] || "// Starter files\n";
+
+    const targetProject: CompilerProject = {
+      id: `proj_${Date.now()}`,
+      title,
+      language: language as ProgrammingLanguage,
+      activeFileName: fileExt,
+      createdAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toLocaleTimeString(),
+      files: [{ name: fileExt, content: starterStr, language: language as ProgrammingLanguage }]
+    };
+
+    setProjects(prev => [...prev, targetProject]);
+    setActiveProjectId(targetProject.id);
+    setActivePage('workspace');
+  };
+
+  const handleSelectRecentProject = (proj: CompilerProject) => {
+    setActiveProjectId(proj.id);
+    setActivePage('workspace');
+    triggerToastNotification(`Swapped active IDE directory path to: "${proj.title}"`);
+  };
+
+  // Loads Homework problem straight into Editor workspace
+  const handleLoadChallengeIntoWorkspace = (title: string, language: ProgrammingLanguage, content: string, fileName: string) => {
+    const loadedProj: CompilerProject = {
+      id: `task_${Date.now()}`,
+      title: `Assignment: ${title.split(':')[0]}`,
+      language,
+      activeFileName: fileName,
+      createdAt: new Date().toLocaleDateString(),
+      updatedAt: new Date().toLocaleTimeString(),
+      files: [{ name: fileName, content, language }]
+    };
+
+    setProjects(prev => [...prev, loadedProj]);
+    setActiveProjectId(loadedProj.id);
+  };
+
+  // Login handler
+  const handleLogin = (email: string, name: string, role: 'student' | 'admin') => {
+    const isTeacher = role === 'admin' || email.toLowerCase().includes("admin");
+    const matchedProfile: UserProfile = {
+      name,
+      email,
+      rollNo: isTeacher ? "FACULTY-ADM-241" : "VTX-2026-9481",
+      avatarSeed: "alex",
+      completedChallenges: isTeacher ? 5 : 3,
+      xpCoins: isTeacher ? 950 : 450,
+      grade: isTeacher ? "PHD (Dean)" : "A+ (3.92)",
+      enrolledDate: "Sept 12, 2024",
+      role: isTeacher ? "admin" : "student"
+    };
+
+    setUser(matchedProfile);
+    setActivePage('dashboard');
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setActivePage('landing');
+  };
+
+  const handleUpdateProfile = (name: string, avatarSeed: string) => {
+    if (!user) return;
+    setUser({
+      ...user,
+      name,
+      avatarSeed
+    });
+  };
+
+  // Admin handles: award student XP points
+  const handleAwardXP = (studentId: string, amount: number) => {
+    setStudents(prev => prev.map(s => {
+      if (s.id === studentId) {
+        return { ...s, xp: s.xp + amount };
+      }
+      return s;
+    }));
+  };
+
+  // Admin handles: publish curriculum task
+  const handlePostNewTask = (title: string, language: ProgrammingLanguage) => {
+    // Simulated add task alerts
+    triggerToastNotification(`Successfully broadcasted academic task: "${title}" across class groups!`);
+  };
+
+  // CSS mappings
+  const fontStyles = {
+    mono: 'font-mono',
+    sans: 'font-sans',
+    display: 'font-display'
+  };
+
+  return (
+    <div className={`min-h-screen bg-[#040212] text-[#f1f5f9] relative pb-10 ${fontStyles[fontPreference]}`} id="app_root_layout">
+      
+      {/* Visual background gradients */}
+      <div className="absolute top-0 left-0 right-0 h-[450px] bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.18),rgba(0,0,0,0))] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),rgba(0,0,0,0))] pointer-events-none" />
+
+      {/* Unified top logo and page selector menus Navbar */}
+      <Navbar 
+        activePage={activePage} 
+        setActivePage={setActivePage} 
+        onRunCompile={runCompilerCompilation} 
+        user={user}
+      />
+
+      {/* Primary Main Routing Engine Layout */}
+      <main className="relative z-10 pt-24 px-4 md:px-8 max-w-7xl mx-auto min-h-[75vh]">
+        
+        {/* VIEW 1: LANDING */}
+        {activePage === 'landing' && (
+          <div className="animate-fade-in">
+            <LandingView 
+              onLaunchWorkspace={(lang) => {
+                if (lang) {
+                  const fitProj = projects.find(p => p.language === lang);
+                  if (fitProj) setActiveProjectId(fitProj.id);
+                }
+                setActivePage('workspace');
+              }}
+              onOpenAuth={(isRegister) => {
+                setActivePage('auth');
+              }}
+              isAuthenticated={user !== null}
+            />
           </div>
         )}
 
-        {/* 2. DEDICATED ABOUT PAGE */}
-        {activePage === 'about' && (
-          <div className="animate-fade-in" id="about_view_wrapper">
-            <About />
+        {/* VIEW 2: AUTHENTICATION / USER ACCOUNT VIEWS */}
+        {activePage === 'auth' && (
+          <div className="animate-fade-in">
+            <AuthView 
+              user={user}
+              onLogin={handleLogin}
+              onLogout={handleLogout}
+              onUpdateProfile={handleUpdateProfile}
+              triggerToastNotification={triggerToastNotification}
+            />
           </div>
         )}
 
-        {/* 3. DEDICATED SERVICES PAGE */}
-        {activePage === 'services' && (
-          <div className="animate-fade-in" id="services_view_wrapper">
-            <Services setActivePage={setActivePage} setSelectedServiceId={setSelectedServiceId} />
+        {/* VIEW 3: STUDENT DASHBOARD PLATFORMS */}
+        {activePage === 'dashboard' && user && (
+          <div className="animate-fade-in">
+            <DashboardView 
+              user={user}
+              projects={projects}
+              onCreateNewProject={handleCreateNewProject}
+              onSelectProject={handleSelectRecentProject}
+              onNavigateToPage={setActivePage}
+              triggerToastNotification={triggerToastNotification}
+            />
           </div>
         )}
 
-        {/* 4. DEDICATED PROJECTS PAGE */}
-        {activePage === 'projects' && (
-          <div className="animate-fade-in" id="projects_view_wrapper">
-            <Projects />
+        {/* VIEW 4: CODE EDITOR COMPILER WORKSPACE */}
+        {activePage === 'workspace' && (
+          <div className="animate-fade-in">
+            <WorkspaceView 
+              htmlCode={htmlCode}
+              setHtmlCode={setHtmlCode}
+              cssCode={cssCode}
+              setCssCode={setCssCode}
+              jsCode={jsCode}
+              setJsCode={setJsCode}
+              logs={logs}
+              setLogs={setLogs}
+              useTailwind={useTailwind}
+              setUseTailwind={setUseTailwind}
+              viewportMode={viewportMode}
+              setViewportMode={setViewportMode}
+              lastCompiledAt={lastCompiledAt}
+              runCompilerCompilation={runCompilerCompilation}
+              triggerToastNotification={triggerToastNotification}
+              setActivePage={setActivePage}
+              projects={projects}
+              setProjects={setProjects}
+              activeProjectId={activeProjectId}
+              setActiveProjectId={setActiveProjectId}
+            />
           </div>
         )}
 
-        {/* 5. DEDICATED LABS PAGE */}
-        {activePage === 'labs' && (
-          <div className="animate-fade-in" id="labs_view_wrapper">
-            <Labs />
+        {/* VIEW 5: CURRICULUM BLUEPRINTS & ASSIGNMENTS LEDGERS */}
+        {activePage === 'blueprints' && (
+          <div className="animate-fade-in">
+            <BlueprintsView 
+              onLoadChallenge={handleLoadChallengeIntoWorkspace}
+              triggerToastNotification={triggerToastNotification}
+              setActivePage={setActivePage}
+            />
           </div>
         )}
 
-        {/* 6. DEDICATED TECHNOLOGIES PAGE */}
-        {activePage === 'technologies' && (
-          <div className="animate-fade-in" id="technologies_view_wrapper">
-            <Technologies />
+        {/* VIEW 6: FACULTY / DEAN CONTROL PANELS */}
+        {activePage === 'admin' && user && (
+          <div className="animate-fade-in">
+            <AdminView 
+              students={students}
+              onAwardXP={handleAwardXP}
+              onPostNewTask={handlePostNewTask}
+              triggerToastNotification={triggerToastNotification}
+            />
           </div>
         )}
 
-        {/* 7. DEDICATED CONTACT ESTIMATOR PAGE */}
-        {activePage === 'contact' && (
-          <div className="animate-fade-in" id="contact_view_wrapper">
-            <Contact selectedServiceId={selectedServiceId} setSelectedServiceId={setSelectedServiceId} />
+        {/* VIEW 7: RESIDENT AI COPILOT AND ASSISTANT CHATS */}
+        {activePage === 'ai-copilot' && (
+          <div className="animate-fade-in">
+            <AiCopilotView 
+              htmlCode={htmlCode}
+              setHtmlCode={setHtmlCode}
+              cssCode={cssCode}
+              setCssCode={setCssCode}
+              jsCode={jsCode}
+              setJsCode={setJsCode}
+              triggerToastNotification={triggerToastNotification}
+              runCompilerCompilation={runCompilerCompilation}
+            />
           </div>
         )}
+
+        {/* VIEW 8: COMPILER SETTINGS AND SYSTEM MODES */}
+        {activePage === 'settings' && (
+          <div className="animate-fade-in">
+            <SettingsView 
+              useTailwind={useTailwind}
+              setUseTailwind={setUseTailwind}
+              viewportMode={viewportMode}
+              setViewportMode={setViewportMode}
+              fontPreference={fontPreference}
+              setFontPreference={setFontPreference}
+              onClearWorkspace={handleClearWorkspace}
+              htmlCode={htmlCode}
+              cssCode={cssCode}
+              jsCode={jsCode}
+              triggerToastNotification={triggerToastNotification}
+            />
+          </div>
+        )}
+
+
 
       </main>
 
-      {/* Corporate footer */}
-      <Footer setActivePage={setActivePage} />
+      {/* Toast Notification Alert systems */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 bg-gradient-to-r from-purple-950 to-indigo-950 border border-purple-500/35 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-2.5 animate-slide-up text-left max-w-sm font-mono">
+          <span className="text-purple-400 font-bold select-none">📢</span>
+          <p className="text-xs text-purple-200 font-medium leading-normal">{toastMessage}</p>
+        </div>
+      )}
+
+      {/* Modern footer details */}
+      <footer className="mt-20 border-t border-indigo-950/40 pt-6 font-mono text-[10px] text-zinc-600 max-w-7xl mx-auto px-4 md:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <span>© 2026 Vertex Online Compiler. Constructed in secure Sandboxed environment.</span>
+        </div>
+        <div className="flex space-x-4">
+          <span>Target Architecture: Web-ASM Multilingual</span>
+          <span>● Environment Health: Operating</span>
+        </div>
+      </footer>
+
     </div>
   );
 }
