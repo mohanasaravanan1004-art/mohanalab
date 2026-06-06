@@ -449,11 +449,11 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-[#040212] text-[#f1f5f9] relative pb-10 ${fontStyles[fontPreference]}`} id="app_root_layout">
+    <div className={`min-h-screen bg-[#070b1e] text-[#f1f5f9] relative pb-10 ${fontStyles[fontPreference]}`} id="app_root_layout">
       
       {/* Visual background gradients */}
-      <div className="absolute top-0 left-0 right-0 h-[450px] bg-[radial-gradient(circle_at_50%_0%,rgba(124,58,237,0.18),rgba(0,0,0,0))] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),rgba(0,0,0,0))] pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-[450px] bg-[radial-gradient(circle_at_50%_0%,rgba(14,165,233,0.18),rgba(0,0,0,0))] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.08),rgba(0,0,0,0))] pointer-events-none" />
 
       {/* Unified top logo and page selector menus Navbar */}
       <Navbar 

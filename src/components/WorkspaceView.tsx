@@ -43,7 +43,12 @@ import {
   Activity,
   History,
   X,
-  FileText
+  FileText,
+  Home,
+  Menu,
+  RotateCw,
+  Contrast,
+  Save
 } from 'lucide-react';
 import { PageId, CompilerProject, WorkspaceFile, ProgrammingLanguage } from '../types';
 
@@ -114,11 +119,49 @@ export default function WorkspaceView({
   const [openTabs, setOpenTabs] = useState<string[]>([]);
   const [splitActive, setSplitActive] = useState(false);
   const [splitActiveFileName, setSplitActiveFileName] = useState<string>('');
+
+  // ================= W3SCHOOLS PLAYGROUND ENGINE STATES =================
+  const [isW3SchoolsPlayground, setIsW3SchoolsPlayground] = useState<boolean>(true);
+  const [splitOrientation, setSplitOrientation] = useState<'horizontal' | 'vertical'>('horizontal');
+  const [previewWidth, setPreviewWidth] = useState<number>(745);
+  const [previewHeight, setPreviewHeight] = useState<number>(675);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
   
   // Custom Editor Properties Settings
   const [editorFontSize, setEditorFontSize] = useState<number>(13);
   const [minimapEnabled, setMinimapEnabled] = useState<boolean>(true);
-  const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'light'>('vs-dark');
+  const [editorTheme, setEditorTheme] = useState<string>('vs-dark-blue');
+
+  const handleBeforeMount = (monaco: any) => {
+    monaco.editor.defineTheme('vs-dark-blue', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [
+        { token: '', foreground: 'e2e8f0' },
+        { token: 'comment', foreground: '64748b', fontStyle: 'italic' },
+        { token: 'keyword', foreground: '38bdf8', fontStyle: 'bold' },
+        { token: 'string', foreground: '34d399' },
+        { token: 'number', foreground: 'fbbf24' },
+        { token: 'regexp', foreground: 'f87171' },
+        { token: 'type', foreground: '60a5fa' },
+        { token: 'class', foreground: '60a5fa' },
+        { token: 'function', foreground: '04aa6d' },
+        { token: 'variable', foreground: '94a3b8' },
+      ],
+      colors: {
+        'editor.background': '#070b1e', 
+        'editor.lineHighlightBackground': '#121b3a88',
+        'editorCursor.foreground': '#04aa6d',
+        'editor.lineHighlightBorder': '#121b3a00',
+        'editorGutter.background': '#070b1e',
+        'editorLineNumber.foreground': '#475569',
+        'editorLineNumber.activeForeground': '#04aa6d',
+        'editor.selectionBackground': '#1e293b88',
+        'editor.inactiveSelectionBackground': '#0f172a55',
+      }
+    });
+  };
+
   const [wordWrap, setWordWrap] = useState<'on' | 'off'>('on');
   const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(false);
 
@@ -150,7 +193,8 @@ export default function WorkspaceView({
   const [renamingValue, setRenamingValue] = useState('');
 
   // Bottom Interactive Bash-Terminal simulator states
-  const [consoleActiveTab, setConsoleActiveTab] = useState<'stdout' | 'stderr' | 'terminal' | 'stdin' | 'metrics'>('stdout');
+  const [consoleActiveTab, setConsoleActiveTab] = useState<'stdout' | 'stderr' | 'terminal' | 'stdin' | 'metrics' | 'preview'>('stdout');
+  const [compilerSplitLayout, setCompilerSplitLayout] = useState<'normal' | 'expanded' | 'only_output'>('normal');
   const [terminalHistory, setTerminalHistory] = useState<TerminalLine[]>([
     { text: "🖥️ Vertex Online Sandbox Shell v1.45.0-AMD64", type: 'raw' },
     { text: "Type 'help' to audit system instructions or list executable macros.", type: 'info' },
@@ -169,12 +213,60 @@ export default function WorkspaceView({
     }
   }, [activeProj?.activeFileName]);
 
+  // Dynamic observer to track the preview container dimensions (Result Size indicator)
+  useEffect(() => {
+    if (!previewContainerRef.current) return;
+    const updateDimensions = () => {
+      if (previewContainerRef.current) {
+        setPreviewWidth(previewContainerRef.current.clientWidth);
+        setPreviewHeight(previewContainerRef.current.clientHeight);
+      }
+    };
+    
+    updateDimensions();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateDimensions();
+    });
+    
+    resizeObserver.observe(previewContainerRef.current);
+    
+    window.addEventListener('resize', updateDimensions);
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateDimensions);
+    };
+  }, [splitActive, compilerSplitLayout, splitOrientation, isW3SchoolsPlayground, activeProjectId]);
+
   // Clean local visual compiler previews when project changes
   useEffect(() => {
-    if (activeProj && activeProj.language === 'html') {
-      setTimeout(() => { runCompilerCompilation(); }, 250);
+    if (activeProj) {
+      if (activeProj.language === 'html') {
+        const htmlContent = activeProj.files.find(f => f.name === 'index.html')?.content || '';
+        const cssContent = activeProj.files.find(f => f.name === 'styles.css')?.content || '';
+        const jsContent = activeProj.files.find(f => f.name === 'main.js')?.content || '';
+        
+        if (htmlContent) setHtmlCode(htmlContent);
+        if (cssContent) setCssCode(cssContent);
+        if (jsContent) setJsCode(jsContent);
+
+        setConsoleActiveTab('preview');
+        setTimeout(() => { runCompilerCompilation(); }, 250);
+      } else {
+        setConsoleActiveTab('stdout');
+      }
     }
   }, [activeProjectId]);
+
+  // Live Auto-compile for html code drafts when states differ or change
+  useEffect(() => {
+    if (activeProj && activeProj.language === 'html') {
+      const compileTimer = setTimeout(() => {
+        runCompilerCompilation();
+      }, 150);
+      return () => clearTimeout(compileTimer);
+    }
+  }, [htmlCode, cssCode, jsCode, isW3SchoolsPlayground, activeProjectId]);
 
   // Auto-Save script intervals checks
   useEffect(() => {
@@ -727,7 +819,13 @@ export default function WorkspaceView({
     setStderrLogs('');
     setExecTime(null);
     setMemUsed(null);
-    setConsoleActiveTab('stdout');
+    
+    if (activeProj.language === 'html') {
+      setConsoleActiveTab('preview');
+    } else {
+      setConsoleActiveTab('stdout');
+    }
+    
     triggerToastNotification(`Piping instruction classes through Vertex Sandboxes...`);
 
     try {
@@ -1112,8 +1210,252 @@ export default function WorkspaceView({
     ruby: 'ruby'
   };
 
+  if (isW3SchoolsPlayground) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-80px)] bg-[#070b1e] border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl relative text-zinc-100 select-text" id="w3schools_editor_workspace">
+        {/* W3Schools Tryit style Top Bar Header */}
+        <div className="bg-[#0e162f] border-b border-zinc-800 h-14 flex items-center justify-between px-4 text-zinc-100 select-none z-10 shrink-0">
+          
+          {/* Left Controls */}
+          <div className="flex items-center space-x-1 border border-transparent sm:space-x-2">
+            {/* Home Icon */}
+            <button 
+              onClick={() => setActivePage('dashboard')}
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors cursor-pointer"
+              title="Return to Dashboard Workspace"
+            >
+              <Home className="w-[18px] h-[18px]" />
+            </button>
+            
+            {/* Menu icon */}
+            <button 
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors cursor-pointer"
+              title="Switch to full IDE view settings"
+              onClick={() => {
+                setIsW3SchoolsPlayground(false);
+                setIsSidebarCollapsed(false);
+              }}
+            >
+              <Menu className="w-[18px] h-[18px]" />
+            </button>
+ 
+            {/* Save icon */}
+            <button 
+              onClick={() => {
+                triggerToastNotification("Workspace state cached securely in cloud sandbox storage! 💾");
+              }}
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors cursor-pointer"
+              title="Save changes"
+            >
+              <Save className="w-[18px] h-[18px]" />
+            </button>
+ 
+            {/* Rotate/Swap Orientation Button */}
+            <button 
+              onClick={() => {
+                setSplitOrientation(prev => prev === 'horizontal' ? 'vertical' : 'horizontal');
+                triggerToastNotification(`Refreshed layout grid alignment to: ${splitOrientation === 'horizontal' ? 'vertical stacked row' : 'horizontal side-by-side'}`);
+              }}
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors cursor-pointer"
+              title="Toggle horizontal or stacked preview"
+            >
+              <RotateCw className="w-[18px] h-[18px]" />
+            </button>
+ 
+            {/* Theme Toggle Button */}
+            <button 
+              onClick={() => {
+                setEditorTheme(prev => prev === 'vs-dark-blue' ? 'light' : 'vs-dark-blue');
+                triggerToastNotification(`Swapped console palette standard to ${editorTheme === 'vs-dark-blue' ? 'light' : 'dark'}`);
+              }}
+              className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800/50 rounded-lg transition-colors cursor-pointer"
+              title="Toggle darkness themes"
+            >
+              <Contrast className="w-[18px] h-[18px]" />
+            </button>
+ 
+            {/* W3schools Green Run Button */}
+            <button
+              onClick={() => {
+                if (activeProj.language === 'html') {
+                  setTimeout(() => { runCompilerCompilation(); }, 50);
+                } else {
+                  handleExecuteCompiler();
+                }
+              }}
+              className="bg-[#04aa6d] text-white hover:bg-[#038c5a] px-6 h-9 pb-px rounded-md font-sans text-sm font-bold flex items-center justify-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer ml-1.5"
+              title="Compile & Render output frame"
+            >
+              <span>Run</span>
+              <span className="text-[10px] font-black select-none opacity-85 mt-0.5">❯</span>
+            </button>
+
+            {/* Simple HTML/CSS/JS file selection tabs embedded directly in the top control bar */}
+            {activeProj.language === 'html' && (
+              <div className="flex bg-[#050314] p-0.5 rounded border border-zinc-800 ml-2 shadow-xs shrink-0 select-none">
+                {activeProj.files.map(f => (
+                  <button
+                    key={f.name}
+                    onClick={() => handleSelectFile(f.name)}
+                    className={`px-3 py-1 text-[11px] font-mono rounded cursor-pointer transition-all duration-150 ${
+                      activeProj.activeFileName === f.name
+                        ? 'bg-[#04aa6d] text-white font-extrabold shadow-sm'
+                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/45 font-medium'
+                    }`}
+                  >
+                    {f.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Center Dynamic Sizing Label */}
+          <div className="hidden sm:flex items-center justify-center text-zinc-300 text-xs font-mono select-none bg-[#070b1e] px-4 py-1.5 rounded-lg border border-zinc-800/80">
+            <span className="text-zinc-400 font-sans font-medium">Result Size:&nbsp;</span>
+            <span className="font-bold text-[#04aa6d]">{previewWidth}</span>
+            <span className="text-zinc-500 mx-1.5">x</span>
+            <span className="font-bold text-[#04aa6d]">{previewHeight}</span>
+          </div>
+
+          {/* Right Area Button */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => {
+                triggerToastNotification("Registering high speed free developer sandbox subdomain hosting...");
+              }}
+              className="bg-[#04aa6d] text-white font-sans text-xs sm:text-[13px] font-semibold h-9 px-4 rounded-full hover:bg-[#038c5a] transition-all cursor-pointer flex items-center justify-center border-none shadow-sm hover:scale-[1.01] active:scale-95"
+            >
+              Get your own website
+            </button>
+
+            {/* Back to Full IDE Toggle */}
+            <button
+              onClick={() => {
+                setIsW3SchoolsPlayground(false);
+                setIsSidebarCollapsed(false);
+              }}
+              className="bg-zinc-850 hover:bg-zinc-800 text-white font-sans text-[11px] font-bold h-9 px-3 rounded-lg cursor-pointer transition-all active:scale-95 shadow-sm border border-zinc-800"
+              title="Switch back to full premium VS Code style layout"
+            >
+              Full IDE 🖥
+            </button>
+          </div>
+
+        </div>
+
+        {/* Workspace Dual-Split Canvas Content Area */}
+        <div className={`flex flex-1 overflow-hidden min-h-[300px] bg-[#070b1e] border-t border-zinc-900 ${
+          splitOrientation === 'horizontal' ? 'flex-row' : 'flex-col'
+        }`}>
+            {/* LEFT SIDE: Clean Code Input Pane */}
+          <div className={`relative flex flex-col h-full bg-[#070b1e] overflow-hidden ${
+            splitOrientation === 'horizontal' ? 'w-1/2 border-r border-zinc-900' : 'h-1/2 border-b border-zinc-900'
+          }`}>
+            {/* Monaco active code canvas container */}
+            <div className="flex-1 w-full overflow-hidden bg-[#070b1e] relative">
+              <Editor
+                height="100%"
+                theme={editorTheme}
+                beforeMount={handleBeforeMount}
+                language={monacoLanguageMap[activeFileObj?.language || 'javascript']}
+                value={activeFileObj?.content || ''}
+                onChange={(val) => handleCodeChange(val || '')}
+                loading={
+                  <div className="h-full flex flex-col items-center justify-center space-y-4 text-xs font-mono text-zinc-500 bg-[#070b1e]">
+                    <RefreshCw className="w-8 h-8 animate-spin text-[#04aa6d]" />
+                    <span>Loading Monaco Canvas...</span>
+                  </div>
+                }
+                options={{
+                  fontSize: 14,
+                  minimap: { enabled: false }, // W3Schools uses no minimaps!
+                  wordWrap: 'on',
+                  lineNumbers: 'on',
+                  roundedSelection: true,
+                  scrollBeyondLastLine: false,
+                  readOnly: false,
+                  automaticLayout: true,
+                }}
+              />
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: Visual Result IFrame Panel (W3Schools Render) */}
+          <div 
+            ref={previewContainerRef}
+            className={`relative flex flex-col h-full bg-[#070b1e] select-text ${
+              splitOrientation === 'horizontal' ? 'w-1/2' : 'h-1/2'
+            }`}
+          >
+            {/* Visual Result Frame */}
+            <div className="flex-1 w-full bg-[#070b1e] relative overflow-hidden">
+              {activeProj.language === 'html' ? (
+                <iframe 
+                  id="compiler_preview_iframe"
+                  title="W3Schools Style Web Preview"
+                  className="absolute inset-0 w-full h-full border-none bg-white font-sans text-black"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col p-6 font-mono text-xs text-zinc-300 bg-[#0c1224] overflow-y-auto">
+                  <div className="flex justify-between items-center border-b border-zinc-800/85 pb-2 mb-3">
+                    <span className="text-[#04aa6d] font-bold">Standard Stream Logs:</span>
+                    <button
+                      onClick={() => {
+                        setStdoutLogs('');
+                        setStderrLogs('');
+                      }}
+                      className="text-[10px] font-sans font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2 py-0.5 rounded cursor-pointer border-none transition-colors"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  {runStatus === 'running' ? (
+                    <div className="flex items-center gap-2 text-zinc-500 py-4">
+                      <RefreshCw className="w-4 h-4 animate-spin text-[#04aa6d]" />
+                      <span>Compiling program code branches...</span>
+                    </div>
+                  ) : stdoutLogs || stderrLogs ? (
+                    <div className="space-y-4">
+                      {stdoutLogs && (
+                        <pre className="whitespace-pre-wrap leading-relaxed text-zinc-100 bg-emerald-500/5 p-3 rounded-lg border border-emerald-500/10">
+                          {stdoutLogs}
+                        </pre>
+                      )}
+                      {stderrLogs && (
+                        <pre className="whitespace-pre-wrap leading-relaxed text-rose-400 bg-rose-500/5 p-3 rounded-lg border border-rose-500/10 font-bold font-mono">
+                          {stderrLogs}
+                        </pre>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-zinc-500 italic">Click the green "Run" button of the top bar to trigger compilation algorithms and print virtual standard outputs!</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Global Floating mode hint button, bottom-left of compiler workspace */}
+        <div className="absolute bottom-4 left-4 z-20 flex gap-2">
+          <button
+            onClick={() => {
+              setIsW3SchoolsPlayground(false);
+              triggerToastNotification("Switched to high-performance Dark VS Code mode.");
+            }}
+            className="flex items-center gap-1.5 bg-[#0e162f] hover:bg-zinc-950 text-[#6bfce0] hover:text-white px-3 py-1.5 rounded-lg border border-[#5dfdcb]/15 shadow-xl text-[10px] font-mono transition-all font-black select-none pointer-events-auto cursor-pointer"
+          >
+            <span>🖥 Enter VS Code Theme</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] bg-[#040212] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl relative" id="vs_code_ultimate_workspace">
+    <div className="flex flex-col h-[calc(100vh-140px)] bg-[#070b1e] border border-zinc-900 rounded-3xl overflow-hidden shadow-2xl relative" id="vs_code_ultimate_workspace">
       
       {/* Hidden Upload Interface Trigger */}
       <input 
@@ -1688,268 +2030,394 @@ export default function WorkspaceView({
                 <Play className="w-3 h-3 fill-current text-white shrink-0" />
                 <span>compile &amp; run</span>
               </button>
+
+              <button
+                onClick={() => {
+                  setIsW3SchoolsPlayground(true);
+                  triggerToastNotification("Swapped to authentic W3Schools TryIt editor theme layout ❯");
+                }}
+                className="py-1.5 px-3 bg-[#04aa6d] hover:bg-[#038c5a] text-white font-mono text-[10px] font-extrabold rounded-lg flex items-center gap-1 active:scale-95 transition-all cursor-pointer shadow-lg shadow-emerald-500/15 shrink-0"
+                title="Enter W3Schools TryIt layout mode"
+              >
+                <span>TryIt Editor ❯</span>
+              </button>
             </div>
           </div>
 
-          {/* Editors panels (Supports Parallel Splits) */}
-          <div className="flex-1 flex overflow-hidden min-h-[220px]">
-            {openTabs.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4 text-center">
-                <FileText className="w-16 h-16 text-zinc-700 animate-bounce" />
-                <div className="space-y-1">
-                  <h4 className="font-display font-black text-white text-sm uppercase">Active terminal is vacant</h4>
-                  <p className="text-zinc-500 text-xs max-w-sm">
-                    Open a module inside the Virtual Workspace File Explorer to load dynamic syntax classes.
-                  </p>
+          {/* Elegant split dashboard container for Compiler view side-by-side */}
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-zinc-900 border-t border-zinc-900">
+            
+            {/* Left Area: Editors panels (Supports Parallel Splits) */}
+            <div className={`
+              ${compilerSplitLayout === 'only_output' ? 'hidden' : ''}
+              ${compilerSplitLayout === 'expanded' ? 'flex-[30]' : 'flex-[55]'}
+              flex flex-col h-full overflow-hidden min-h-[300px]
+            `}>
+              {openTabs.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-4 text-center">
+                  <FileText className="w-16 h-16 text-zinc-700 animate-bounce" />
+                  <div className="space-y-1">
+                    <h4 className="font-display font-black text-white text-sm uppercase">Active editor is vacant</h4>
+                    <p className="text-zinc-500 text-xs max-w-sm">
+                      Open a module inside the Virtual Workspace File Explorer to load dynamic syntax classes.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 flex divide-x divide-zinc-900 overflow-hidden relative">
+                  
+                  {/* Panel A: Main Core editor */}
+                  <div className="flex-1 flex flex-col h-full overflow-hidden">
+                    <Editor
+                      height="100%"
+                      theme={editorTheme}
+                      beforeMount={handleBeforeMount}
+                      language={monacoLanguageMap[activeFileObj?.language || 'javascript']}
+                      value={activeFileObj?.content || ''}
+                      onChange={(val) => handleCodeChange(val || '')}
+                      loading={
+                        <div className="h-full flex flex-col items-center justify-center space-y-4 text-xs font-mono text-purple-400 bg-black/40">
+                          <RefreshCw className="w-8 h-8 animate-spin" />
+                          <span>Initializing Monaco Compiler Engine...</span>
+                        </div>
+                      }
+                      options={{
+                        fontSize: editorFontSize,
+                        minimap: { enabled: minimapEnabled },
+                        wordWrap: wordWrap,
+                        lineNumbers: 'on',
+                        roundedSelection: true,
+                        scrollBeyondLastLine: false,
+                        readOnly: false,
+                        automaticLayout: true,
+                      }}
+                    />
+                  </div>
+
+                  {/* Split Parallel Pane (Displays second selected file parallelly!) */}
+                  {splitActive && (
+                    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#070b1e]">
+                      <div className="bg-[#0e162f] p-2 flex justify-between items-center text-xs border-b border-zinc-900 shrink-0 select-none">
+                        <span className="font-mono text-[11px] font-bold text-slate-350 flex items-center gap-1.5">
+                          <Layers className="w-3.5 h-3.5 text-blue-400" />
+                          <span>Split Screen: {splitActiveFileName || 'Select file'}</span>
+                        </span>
+                        <select
+                          value={splitActiveFileName}
+                          onChange={(e) => setSplitActiveFileName(e.target.value)}
+                          className="bg-black/45 border border-zinc-800 text-[10.5px] font-mono text-white p-0.5 rounded outline-none"
+                        >
+                          {activeProj.files.map(f => (
+                            <option key={f.name} value={f.name}>{f.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="flex-1 overflow-hidden">
+                        <Editor
+                          height="100%"
+                          theme={editorTheme}
+                          beforeMount={handleBeforeMount}
+                          language={monacoLanguageMap[activeProj.files.find(f => f.name === splitActiveFileName)?.language || 'javascript']}
+                          value={activeProj.files.find(f => f.name === splitActiveFileName)?.content || ''}
+                          onChange={(val) => handleCodeChange(val || '', splitActiveFileName)}
+                          options={{
+                            fontSize: editorFontSize - 1,
+                            minimap: { enabled: false },
+                            wordWrap: wordWrap,
+                            lineNumbers: 'on',
+                            roundedSelection: true,
+                            scrollBeyondLastLine: false,
+                            readOnly: false,
+                            automaticLayout: true,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+
+            {/* Right Area: Interactive Compiler tab outcomes & simulated runtimes */}
+            <div className={`
+              ${compilerSplitLayout === 'only_output' ? 'flex-[100] w-full' : ''}
+              ${compilerSplitLayout === 'expanded' ? 'flex-[70]' : ''}
+              ${compilerSplitLayout === 'normal' ? 'flex-[45]' : ''}
+              bg-[#050314] flex flex-col h-full overflow-hidden min-h-[300px]
+            `} id="online_compiler_interactive_outputs">
+              
+              {/* Tab Header Selector Bar */}
+              <div className="bg-[#08061b] border-b border-zinc-950 px-4 h-9 flex items-center justify-between select-none shrink-0" id="console_tabs_pane_row">
+                <div className="flex items-center gap-3.5 text-xs font-mono h-full items-end overflow-x-auto scrollbar-none">
+                  
+                  {activeProj?.language === 'html' && (
+                    <button
+                      onClick={() => setConsoleActiveTab('preview')}
+                      className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-[3px] select-none ${
+                        consoleActiveTab === 'preview' 
+                          ? 'border-blue-500 text-blue-300 font-black' 
+                          : 'border-transparent text-zinc-500 hover:text-zinc-200'
+                      }`}
+                    >
+                      <Laptop className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Live Preview</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => setConsoleActiveTab('stdout')}
+                    className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-[3px] select-none ${
+                      consoleActiveTab === 'stdout' 
+                        ? 'border-blue-500 text-blue-300 font-extrabold' 
+                        : 'border-transparent text-zinc-500 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Activity className="w-3.5 h-3.5 text-blue-400" />
+                    <span>{activeProj?.language === 'html' ? "Console Logs" : "Output Stream"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => setConsoleActiveTab('stderr')}
+                    className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-[3px] select-none ${
+                      consoleActiveTab === 'stderr' 
+                        ? 'border-amber-500 text-amber-500 font-extrabold' 
+                        : 'border-transparent text-zinc-500 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Bug className="w-3.5 h-3.5 text-rose-400" />
+                    <span className="flex items-center gap-1">
+                      <span>Errors / Warnings</span>
+                      {stderrLogs && <span className="w-2 h-2 rounded-full bg-red-500 animate-slow-ping inline-block" />}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setConsoleActiveTab('stdin')}
+                    className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-[3px] select-none ${
+                      consoleActiveTab === 'stdin' 
+                        ? 'border-amber-500 text-amber-400 font-extrabold' 
+                        : 'border-transparent text-zinc-500 hover:text-zinc-200'
+                    }`}
+                  >
+                    <Database className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Inputs (Stdin)</span>
+                  </button>
+
+                  {activeProj?.language !== 'html' && (
+                    <button
+                      onClick={() => setConsoleActiveTab('terminal')}
+                      className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-[3px] select-none ${
+                        consoleActiveTab === 'terminal' 
+                          ? 'border-emerald-500 text-emerald-400 font-extrabold' 
+                          : 'border-transparent text-zinc-500 hover:text-zinc-200'
+                      }`}
+                    >
+                      <TerminalIcon className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Shell Sandbox</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-1.5 bg-zinc-950/60 p-0.5 rounded-lg border border-zinc-900 shrink-0 select-none">
+                  <span className="text-[10px] text-zinc-550 font-sans px-1 pb-px sm:inline hidden uppercase tracking-wider font-extrabold">Layout Mode:</span>
+                  
+                  <button
+                    onClick={() => setCompilerSplitLayout('normal')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-extrabold font-mono transition-all duration-150 cursor-pointer ${
+                      compilerSplitLayout === 'normal'
+                        ? 'bg-blue-600 text-white shadow shadow-blue-500/15'
+                        : 'text-zinc-500 hover:text-zinc-200'
+                    }`}
+                    title="Classic Half Screen Split"
+                  >
+                    Split
+                  </button>
+
+                  <button
+                    onClick={() => setCompilerSplitLayout('expanded')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-extrabold font-mono transition-all duration-150 cursor-pointer ${
+                      compilerSplitLayout === 'expanded'
+                        ? 'bg-blue-600 text-white shadow shadow-blue-500/15'
+                        : 'text-zinc-500 hover:text-zinc-200'
+                    }`}
+                    title="Expanded Big Screen View"
+                  >
+                    Big Screen 🖥️
+                  </button>
+
+                  <button
+                    onClick={() => setCompilerSplitLayout('only_output')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-extrabold font-mono transition-all duration-150 cursor-pointer ${
+                      compilerSplitLayout === 'only_output'
+                        ? 'bg-amber-600 text-white font-black shadow shadow-amber-500/15 animate-pulse'
+                        : 'text-zinc-500 hover:text-zinc-200'
+                    }`}
+                    title="Output-Only Full Screen Panel"
+                  >
+                    Output Only
+                  </button>
                 </div>
               </div>
-            ) : (
-              <div className="flex-1 flex divide-x divide-zinc-900 overflow-hidden relative">
+
+              {/* Scrollable Container for active outcome visuals */}
+              <div className="flex-1 p-4 overflow-y-auto bg-black/50 scrollbar-thin flex flex-col">
                 
-                {/* Panel A: Main Core editor */}
-                <div className="flex-1 flex flex-col h-full overflow-hidden">
-                  <Editor
-                    height="100%"
-                    theme={editorTheme}
-                    language={monacoLanguageMap[activeFileObj?.language || 'javascript']}
-                    value={activeFileObj?.content || ''}
-                    onChange={(val) => handleCodeChange(val || '')}
-                    loading={
-                      <div className="h-full flex flex-col items-center justify-center space-y-4 text-xs font-mono text-purple-400 bg-black/40">
-                        <RefreshCw className="w-8 h-8 animate-spin" />
-                        <span>Initializing Monaco Compiler Engine...</span>
-                      </div>
-                    }
-                    options={{
-                      fontSize: editorFontSize,
-                      minimap: { enabled: minimapEnabled },
-                      wordWrap: wordWrap,
-                      lineNumbers: 'on',
-                      roundedSelection: true,
-                      scrollBeyondLastLine: false,
-                      readOnly: false,
-                      automaticLayout: true,
-                    }}
-                  />
-                </div>
-
-                {/* Split Parallel Pane (Displays second selected file parallelly!) */}
-                {splitActive && (
-                  <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#060412]">
-                    <div className="bg-[#0d0b26] p-2 flex justify-between items-center text-xs border-b border-zinc-900 shrink-0 select-none">
-                      <span className="font-mono text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                        <Layers className="w-3.5 h-3.5 text-blue-400" />
-                        <span>Split Screen Pane: {splitActiveFileName || 'Select file'}</span>
-                      </span>
-                      <select
-                        value={splitActiveFileName}
-                        onChange={(e) => setSplitActiveFileName(e.target.value)}
-                        className="bg-black/45 border border-zinc-800 text-[10.5px] font-mono text-white p-0.5 rounded outline-none"
-                      >
-                        {activeProj.files.map(f => (
-                          <option key={f.name} value={f.name}>{f.name}</option>
-                        ))}
-                      </select>
+                {consoleActiveTab === 'preview' && activeProj?.language === 'html' && (
+                  <div className="flex-1 w-full h-full flex flex-col justify-between animate-fade-in">
+                    <div className="flex justify-between items-center text-[10px] text-zinc-500 font-mono mb-2 shrink-0 select-none">
+                      <span>SANDBOX VIEWPORT WEB IFRAME PREVIEW</span>
+                      <span className="text-zinc-600 bg-zinc-950 px-1 py-0.5 rounded leading-none">CONTAINMENT</span>
                     </div>
-
-                    <div className="flex-1 overflow-hidden">
-                      <Editor
-                        height="100%"
-                        theme={editorTheme}
-                        language={monacoLanguageMap[activeProj.files.find(f => f.name === splitActiveFileName)?.language || 'javascript']}
-                        value={activeProj.files.find(f => f.name === splitActiveFileName)?.content || ''}
-                        onChange={(val) => handleCodeChange(val || '', splitActiveFileName)}
-                        options={{
-                          fontSize: editorFontSize - 1,
-                          minimap: { enabled: false },
-                          wordWrap: wordWrap,
-                          lineNumbers: 'on',
-                          roundedSelection: true,
-                          scrollBeyondLastLine: false,
-                          readOnly: false,
-                          automaticLayout: true,
-                        }}
+                    <div className="flex-1 relative rounded-2xl overflow-hidden bg-white min-h-[300px]">
+                      <iframe 
+                        id="compiler_preview_iframe"
+                        title="Interactive Web Preview Portal"
+                        className="absolute inset-0 w-full h-full border-none bg-white font-sans text-black"
+                        referrerPolicy="no-referrer"
                       />
                     </div>
                   </div>
                 )}
 
-              </div>
-            )}
-          </div>
-
-          {/* ================= SECTION D: MULTI-TAB BOTTOM CONSOLE / TERMINAL / PROBLEMS ================= */}
-          <div className="h-[210px] bg-[#050314] border-t border-zinc-900 flex flex-col overflow-hidden shrink-0">
-            
-            {/* Headers row tabs selection */}
-            <div className="bg-[#08061b] border-b border-zinc-950 px-4 h-9 flex items-center justify-between select-none shrink-0" id="console_tabs_pane_row">
-              <div className="flex items-center gap-4 text-xs font-mono h-full items-end">
-                
-                <button
-                  onClick={() => setConsoleActiveTab('stdout')}
-                  className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-2 ${
-                    consoleActiveTab === 'stdout' 
-                      ? 'border-blue-500 text-blue-300 font-bold' 
-                      : 'border-transparent text-zinc-500 hover:text-zinc-200'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  <span>Output stream</span>
-                </button>
-
-                <button
-                  onClick={() => setConsoleActiveTab('stderr')}
-                  className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-2 ${
-                    consoleActiveTab === 'stderr' 
-                      ? 'border-amber-500 text-amber-500 font-bold' 
-                      : 'border-transparent text-zinc-500 hover:text-zinc-200'
-                  }`}
-                >
-                  <Bug className="w-3.5 h-3.5" />
-                  <span className="flex items-center gap-1">
-                    <span>Errors console</span>
-                    {stderrLogs && <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />}
-                  </span>
-                </button>
-
-                <button
-                  onClick={() => setConsoleActiveTab('terminal')}
-                  className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-2 ${
-                    consoleActiveTab === 'terminal' 
-                      ? 'border-emerald-500 text-emerald-400 font-bold' 
-                      : 'border-transparent text-zinc-500 hover:text-zinc-200'
-                  }`}
-                >
-                  <TerminalIcon className="w-3.5 h-3.5" />
-                  <span>Simulated Terminal</span>
-                </button>
-
-                <button
-                  onClick={() => setConsoleActiveTab('stdin')}
-                  className={`py-2 px-1 transition-all flex items-center gap-1 cursor-pointer h-full border-b-2 ${
-                    consoleActiveTab === 'stdin' 
-                      ? 'border-amber-500 text-amber-400 font-bold' 
-                      : 'border-transparent text-zinc-500 hover:text-zinc-200'
-                  }`}
-                >
-                  <Database className="w-3.5 h-3.5" />
-                  <span>Inputs (Stdin)</span>
-                </button>
-              </div>
-
-              {/* Status information right alignment */}
-              <div className="flex items-center space-x-2 text-[10px] font-mono text-zinc-500">
-                <span>CPU load : 12%</span>
-                <span>•</span>
-                <span>Threads: idle</span>
-              </div>
-            </div>
-
-            {/* Active view component output layouts */}
-            <div className="flex-1 p-3.5 overflow-y-auto bg-black/60 scrollbar-thin">
-              
-              {/* Output Tab stream details */}
-              {consoleActiveTab === 'stdout' && (
-                <div className="font-mono text-xs text-zinc-300 leading-relaxed text-left whitespace-pre-wrap select-text selection:bg-zinc-800">
-                  {runStatus === 'idle' && (
-                    <span className="text-zinc-605 italic block py-4 text-center">Output panel is empty. Deploy scripts to start.</span>
-                  )}
-                  {runStatus === 'running' && (
-                    <span className="text-blue-400 animate-pulse block py-4 text-center">⏳ Allocating virtual registers and parsing script blocks...</span>
-                  )}
-                  {stdoutLogs && (
-                    <div className="space-y-1">
-                      <p className="text-emerald-400 font-bold">--- TARGET PROCESS LOGGED OUTPUTS ---</p>
-                      <p>{stdoutLogs}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Errors console Tab layout */}
-              {consoleActiveTab === 'stderr' && (
-                <div className="font-mono text-xs leading-relaxed text-left select-text space-y-3">
-                  {!stderrLogs ? (
-                    <span className="text-zinc-650 italic block py-4 text-center">No build diagnostic warnings found. Static code is green.</span>
-                  ) : (
-                    <div className="bg-red-950/15 border border-red-500/10 p-3.5 rounded-xl space-y-3 animate-fade-in text-red-400">
-                      <div className="flex justify-between items-center gap-4">
-                        <strong className="text-[11px] uppercase tracking-wide">Build stack process threw Exception:</strong>
-                        <button
-                          onClick={handleDiagnoseErrorWithAi}
-                          className="px-3 py-1 bg-gradient-to-r from-red-600 to-indigo-750 text-white font-mono text-[10px] font-bold rounded-lg cursor-pointer flex items-center gap-1 active:scale-95 transition-transform"
-                        >
-                          <Sparkles className="w-3.5 h-3.5 animate-pulse text-amber-300" />
-                          <span>Instantly Diagnose with Gemini</span>
-                        </button>
+                {consoleActiveTab === 'stdout' && (
+                  <div className="font-mono text-xs text-zinc-300 leading-relaxed text-left whitespace-pre-wrap select-text selection:bg-indigo-900/40 animate-fade-in flex-1">
+                    {activeProj?.language === 'html' ? (
+                      <div className="flex flex-col h-full justify-between">
+                        <div className="flex justify-between items-center border-b border-zinc-900 pb-2 mb-2 shrink-0">
+                          <p className="text-blue-400 font-black tracking-wide">--- BROWSER CONSOLE PRINTS ---</p>
+                          <button
+                            onClick={() => setLogs([])}
+                            className="text-[10px] font-bold text-zinc-500 hover:text-white px-2 py-0.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg cursor-pointer border border-zinc-800"
+                          >
+                            Clear Outputs
+                          </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto space-y-1.5 divide-y divide-zinc-950 max-h-[350px]">
+                          {logs.length === 0 ? (
+                            <span className="text-zinc-605 italic block py-4 text-center">No console messages logged inside preview frame. Click interactive buttons inside the page preview!</span>
+                          ) : (
+                            logs.map((log, idx) => {
+                              let col = "text-zinc-300 border-l-[3px] border-indigo-550 pl-2 bg-indigo-950/5";
+                              if (log.type === "warn") col = "text-amber-450 border-l-[3px] border-amber-500 pl-2 bg-amber-500/5";
+                              if (log.type === "error") col = "text-rose-400 border-l-[3px] border-red-500 pl-2 bg-red-950/10 font-bold";
+                              return (
+                                <div key={idx} className={`py-1.5 flex items-start gap-2 justify-between ${col}`}>
+                                  <div>
+                                    <span className="text-zinc-600 text-[10px] select-none mr-1.5">[{log.time}]</span>
+                                    <span>{log.text}</span>
+                                  </div>
+                                  <span className="text-zinc-650 text-[9px] select-none pr-1">IFRAME</span>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
                       </div>
-                      <p className="whitespace-pre-wrap block text-zinc-300 font-medium bg-black/45 p-2 rounded-lg border border-red-900/30 font-mono text-[11px]">{stderrLogs}</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* STDIN Inputs panel Tab details */}
-              {consoleActiveTab === 'stdin' && (
-                <div className="space-y-2 text-left h-full flex flex-col justify-between shrink-0">
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500">Provide user input streams for standard class execution:</span>
-                  <textarea
-                    value={stdinBuffer}
-                    onChange={e => setStdinBuffer(e.target.value)}
-                    placeholder="e.g. 100&#10;Vertex User&#10;5.95"
-                    className="w-full bg-[#050314] flex-1 text-zinc-200 p-2.5 rounded-xl border border-zinc-850 font-mono text-xs resize-none outline-none focus:border-indigo-650 focus:ring-0 p-2"
-                  />
-                </div>
-              )}
-
-              {/* Terminal Tab component implementation details */}
-              {consoleActiveTab === 'terminal' && (
-                <div className="font-mono text-xs text-left h-full flex flex-col justify-between shrink-0">
-                  
-                  {/* Scrolling CLI histories lines */}
-                  <div className="flex-1 overflow-y-auto space-y-1 pr-1 pb-2">
-                    {terminalHistory.map((line, idx) => {
-                      let col = 'text-zinc-350';
-                      if (line.type === 'success') col = 'text-emerald-400';
-                      if (line.type === 'error') col = 'text-red-400 font-bold';
-                      if (line.type === 'info') col = 'text-indigo-300';
-                      if (line.type === 'input') col = 'text-blue-300 font-bold';
-                      return (
-                        <p key={idx} className={`${col} leading-relaxed whitespace-pre-wrap`}>
-                          {line.text}
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-emerald-450 font-black border-b border-zinc-900 pb-1.5 tracking-wide uppercase flex justify-between items-center shrink-0">
+                          <span>Standard JVM Execution logs</span>
+                          {execTime && <span className="text-[10px] font-normal lowercase text-zinc-600">Runtime: {execTime}</span>}
                         </p>
-                      );
-                    })}
-                    <div ref={terminalBottomRef} />
+                        {runStatus === 'idle' && (
+                          <span className="text-zinc-605 italic block py-4 text-center">Run binary was not executed yet. Deploy standard classes to inspect.</span>
+                        )}
+                        {runStatus === 'running' && (
+                          <span className="text-blue-400 animate-pulse block py-4 text-center">⏳ Allocating virtual registers and parsing script blocks...</span>
+                        )}
+                        {stdoutLogs && (
+                          <div className="space-y-1">
+                            <p>{stdoutLogs}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+                )}
 
-                  <form onSubmit={handleTerminalSubmit} className="flex gap-2 bg-black/30 border-t border-zinc-950 py-1.5 shrink-0 select-text">
-                    <span className="text-zinc-550 shrink-0 select-none">guest@vtx-sh:~$</span>
-                    <input
-                      type="text"
-                      value={terminalInputValue}
-                      onChange={e => setTerminalInputValue(e.target.value)}
-                      className="grow bg-transparent border-none focus:ring-0 outline-none text-zinc-200 font-mono text-xs p-0"
-                      placeholder="Type command here (e.g. 'help', 'neofetch', 'ls', 'run')..."
+                {consoleActiveTab === 'stderr' && (
+                  <div className="font-mono text-xs leading-relaxed text-left select-text space-y-3 animate-fade-in">
+                    {!stderrLogs ? (
+                      <span className="text-zinc-650 italic block py-4 text-center">No compile exceptions or console crash histories recorded. Diagnostics are clear!</span>
+                    ) : (
+                      <div className="bg-red-950/10 border border-red-500/10 p-3.5 rounded-xl space-y-3 text-red-400">
+                        <div className="flex justify-between items-center gap-4">
+                          <strong className="text-[10.5px] uppercase tracking-wide font-black">Docker cluster exception stacktrace:</strong>
+                          <button
+                            onClick={handleDiagnoseErrorWithAi}
+                            className="px-2.5 py-1.5 bg-gradient-to-r from-red-600 to-indigo-700 text-white font-mono text-[10px] font-extrabold rounded-lg cursor-pointer flex items-center gap-1 active:scale-95 transition-all shadow-md shadow-red-900/20"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-bounce" />
+                            <span>Heal with Gemini Dr</span>
+                          </button>
+                        </div>
+                        <p className="whitespace-pre-wrap block text-zinc-200 font-medium bg-black/40 p-2.5 rounded-lg border border-red-900/30 text-[10.5px] leading-relaxed">{stderrLogs}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {consoleActiveTab === 'stdin' && (
+                  <div className="space-y-2 text-left h-full flex flex-col justify-between shrink-0 animate-fade-in flex-1">
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-zinc-500 font-extrabold pb-1">Stdin argument streams:</span>
+                    <textarea
+                      value={stdinBuffer}
+                      onChange={e => setStdinBuffer(e.target.value)}
+                      placeholder="e.g.&#10;100&#10;Alex Mercer&#10;3.95"
+                      className="w-full bg-[#050314] flex-1 text-zinc-200 p-2.5 rounded-xl border border-zinc-900 font-mono text-xs resize-none outline-none focus:border-indigo-650 focus:ring-0 p-2 min-h-[180px]"
                     />
-                  </form>
-                </div>
-              )}
+                  </div>
+                )}
 
+                {consoleActiveTab === 'terminal' && activeProj?.language !== 'html' && (
+                  <div className="font-mono text-xs text-left h-full flex flex-col justify-between shrink-0 animate-fade-in flex-1">
+                    <div className="flex-1 overflow-y-auto space-y-1 pr-1 pb-4 min-h-[150px]">
+                      {terminalHistory.map((line, idx) => {
+                        let col = 'text-zinc-350';
+                        if (line.type === 'success') col = 'text-emerald-400';
+                        if (line.type === 'error') col = 'text-red-400 font-bold';
+                        if (line.type === 'info') col = 'text-indigo-300';
+                        if (line.type === 'input') col = 'text-blue-350 font-bold';
+                        return (
+                          <p key={idx} className={`${col} leading-relaxed whitespace-pre-wrap`}>
+                            {line.text}
+                          </p>
+                        );
+                      })}
+                      <div ref={terminalBottomRef} />
+                    </div>
+
+                    <form onSubmit={handleTerminalSubmit} className="flex gap-2 bg-black/30 border-t border-zinc-950 py-2 shrink-0 select-text">
+                      <span className="text-zinc-600 shrink-0 select-none font-bold">guest@vtx-sh:~$</span>
+                      <input
+                        type="text"
+                        value={terminalInputValue}
+                        onChange={e => setTerminalInputValue(e.target.value)}
+                        className="grow bg-transparent border-none focus:ring-0 outline-none text-zinc-200 font-mono text-xs p-0"
+                        placeholder="Type standard system macros (e.g. help, clear, neofetch, run)..."
+                      />
+                    </form>
+                  </div>
+                )}
+
+              </div>
             </div>
+
           </div>
 
-          {/* Status Bar at the bottom limit edge of IDE */}
+          {/* Status Bar */}
           <div className="h-6 bg-[#0477bf]/90 border-t border-zinc-900 bg-gradient-to-r from-blue-700 via-indigo-800 to-purple-800 px-4 flex justify-between items-center text-[10.5px] font-mono select-none text-slate-100 shrink-0">
             <div className="flex items-center space-x-3">
               <span className="flex items-center gap-1.5 font-extrabold uppercase">
                 <Laptop className="w-3.5 h-3.5" />
-                <span>Compiler Status: Ready</span>
+                <span>Compiler Status: Online</span>
               </span>
               <span>|</span>
               <span className="flex items-center gap-1 text-slate-350">
                 <Activity className="w-3.5 h-3.5" />
-                <span>CPU load : 12%</span>
+                <span>CPU: 12% Idle</span>
               </span>
             </div>
 
